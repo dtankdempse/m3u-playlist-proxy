@@ -1,0 +1,534 @@
+const http = require('http');
+const url = require('url');
+
+// Create the HTTP server
+http.createServer(async (req, res) => {
+  try {
+    const parsedUrl = url.parse(req.url, true);
+    const pathname = parsedUrl.pathname;
+    const query = parsedUrl.query;
+
+    if (pathname === '/' && !parsedUrl.search) {
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3U Playlist Proxy</title>
+    <style>
+	
+body{
+	color: #626262;
+}
+/* General Form Styling */
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Styling for Input Fields */
+input[type="text"] {
+    width: calc(50% - 10px);
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+	color: #626262;
+}
+
+input[type="text"]:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Styling for Add More and Submit Buttons */
+button {
+  padding: 10px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 45%;
+  margin-left: 20px;
+  align-content: center;
+}
+
+button#add-more {
+	background-color: #007bff;
+    color: white;
+}
+
+button[type="submit"] {
+    background-color: #28a745;
+    color: white;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:focus {
+    outline: none;
+}
+
+/* Styling for Text Area */
+textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 10px;
+    resize: none;
+	color: #626262;
+}
+
+/* Styling for Header Pair Div */
+.header-pair {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+h3,h4 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #626262;
+}
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+ .container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+ .footer {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-top:20px;
+    padding-bottom:10px;
+    text-align:center;
+}
+
+
+textarea#result {
+    width: 100%;
+    max-width: 600px;
+    display: block;
+    margin: 20px auto;
+    padding: 10px;
+    font-size: 16px;
+    border
+
+
+/* Label Styling */
+label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Basic Responsive Design */
+@media (max-width: 600px) {
+    input[type="text"] {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .header-pair {
+        flex-direction: column;
+    }
+}
+
+    </style>
+</head>
+<body><h3>M3U Playlist Proxy</h3>
+     <div class="container"><p>Use the form below to generate a playlist with the necessary headers. For example, if the server requires a "Referer: http://example.com" header to allow streaming, you would enter "Referer" as the Header Name and "http://example.com" as the Header Value.</p></div>
+
+    <form id="headerForm">
+        <div>
+            <label for="playlistUrl">Playlist URL:</label><br>
+            <input type="text" id="playlistUrl" name="playlistUrl" placeholder="Enter playlist URL" style="width: 96%; margin-bottom: 20px;">
+        </div>
+        
+        <div class="header-pair">
+            <input type="text" name="headerName" placeholder="Header Name">
+            <input type="text" name="headerValue" placeholder="Header Value">
+        </div>
+        <button type="button" id="add-more">Add More Headers</button>
+        <button type="submit">Generate Playlist URL</button>
+    </form>
+
+    <h4>Generated Playlist URL:</h4>
+
+    <textarea id="result" rows="4" cols="80" readonly></textarea>
+    <div class="container"><p>Once the URL has been generated, you can use a URL shortener like <a href="https://tinyurl.com" target=_blank">TinyURL.com</a> to shorten it. This will make it much easier to add the URL as a M3U playlist within your IPTV application.</p>
+	
+	<div class="container" id="firewall-warning"></div>
+	</div>
+
+<div class="footer">Created by  <a href="https://github.com/dtankdempse/m3u-playlist-proxy">Tank Dempse</a></div>
+    <script>
+    // Function to add more header input fields
+    document.getElementById('add-more').addEventListener('click', function () {
+        const headerPair = document.createElement('div');
+        headerPair.classList.add('header-pair');
+        headerPair.innerHTML = 
+            "<input type='text' name='headerName' placeholder='Header Name'>" +
+            "<input type='text' name='headerValue' placeholder='Header Value'>";
+        document.getElementById('headerForm').insertBefore(headerPair, document.getElementById('add-more'));
+    });
+
+    // Function to handle form submission and generate the full URL
+    document.getElementById('headerForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const playlistUrl = document.getElementById('playlistUrl').value.trim();
+        if (!playlistUrl) {
+            alert('Please enter a Playlist URL.');
+            return;
+        }
+
+        let headers = [];
+        const headerPairs = document.querySelectorAll('.header-pair');
+
+        headerPairs.forEach(pair => {
+            const headerName = pair.querySelector('input[name="headerName"]').value;
+            const headerValue = pair.querySelector('input[name="headerValue"]').value;
+            if (headerName && headerValue) {
+                headers.push(headerName + "=" + headerValue);
+            }
+        });
+
+        if (headers.length > 0) {
+            const headerString = headers.join('|');
+            const base64Encoded = btoa(headerString);
+            const urlEncodedData = encodeURIComponent(base64Encoded);
+            const baseUrl = window.location.origin;
+            const fullUrl = baseUrl + "/playlist?url=" + encodeURIComponent(playlistUrl) + "&data=" + urlEncodedData;
+
+            document.getElementById('result').value = fullUrl;
+        } else {
+            alert('Please add at least one header.');
+        }
+    });
+	document.addEventListener('DOMContentLoaded', function() {
+		const host = window.location.hostname;
+		console.log("Hostname detected:", host); // Debugging line to check hostname
+		if (host === 'localhost' || host === '127.0.0.1') {
+			console.log("Triggering warning for localhost or 127.0.0.1"); // Debugging line for condition check
+			const warning = document.createElement('div');
+			warning.classList.add('container');
+			warning.style.color = '#ff4e4e';
+			warning.style.fontSize = '20px';
+			warning.style.textAlign = 'center';
+			warning.style.fontWeight = 'bold';
+			warning.innerHTML = '<p>Warning: If you are accessing this page via <code>127.0.0.1</code> or <code>localhost</code>, proxying will not work on other devices. Please load this page using your computers IP address (e.g., <code>192.168.x.x</code>) and port in order to access the playlist from other devices on your network.</p><p>How to locate ip address on <a href="https://www.youtube.com/watch?v=UAhDHXN2c6E" target=_blank">Windows</a> or <a href="https://www.youtube.com/watch?v=gaIYP4TZfHI" target=_blank">Linux</a>.</p>';
+			document.body.insertBefore(warning, document.body.firstChild);
+		}
+	});
+	document.addEventListener('DOMContentLoaded', function() {		
+		const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+		
+		const warningMessage = 
+    '<p>Also, ensure that port <strong>' + port + '</strong> is open and allowed through your Windows (<a href="https://youtu.be/zOZWlTplrcA?si=nGXrHKU4sAQsy18e&t=18" target=_blank">how to</a>) or Linux  (<a href="https://youtu.be/7c_V_3nWWbA?si=Hkd_II9myn-AkNnS&t=12" target=_blank">how to</a>) firewall settings. This will enable other devices, such as Firestick, Android, and others, to connect to the server and request the playlist through the proxy.</p>';
+		
+		document.getElementById('firewall-warning').innerHTML = warningMessage;
+	});
+</script>
+
+</body>
+</html>`;
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      return res.end(html);
+    }
+
+    if (pathname === '/playlist') {
+      const urlParam = query.url;
+      const dataParam = query.data;
+
+      if (!urlParam) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        return res.end('URL parameter missing');
+      }
+
+      return await handlePlaylistRequest(req, res, urlParam, dataParam);
+    }
+
+    const requestUrl = query.url ? decodeURIComponent(query.url) : null;
+    const secondaryUrl = query.url2 ? decodeURIComponent(query.url2) : null;
+    const data = query.data ? Buffer.from(query.data, 'base64').toString() : null;
+    const isMaster = !query.url2;
+    const finalRequestUrl = isMaster ? requestUrl : secondaryUrl;
+
+    if (finalRequestUrl) {
+      if (query.key && query.key === 'true') {
+        return await fetchEncryptionKey(res, finalRequestUrl, data);
+      }
+
+      const dataType = isMaster ? 'text' : 'binary';
+      const result = await fetchContent(finalRequestUrl, data, dataType);
+
+      if (result.status >= 400) {
+        res.writeHead(result.status, { 'Content-Type': 'text/plain' });
+        return res.end(`Error: ${result.status}`);
+      }
+
+      let content = result.content;
+
+      if (isMaster) {
+        const baseUrl = new URL(result.finalUrl).origin;
+        const proxyUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
+        content = rewriteUrls(content, baseUrl, proxyUrl, query.data);
+      }
+
+      res.writeHead(result.status, result.headers);
+      return res.end(content);
+    }
+
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    return res.end('Bad Request');
+  } catch (err) {
+    console.error('Error handling request:', err);
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Internal Server Error');
+  }
+}).listen(4123, '0.0.0.0', () => {
+  console.log('Server is running on port 4123');
+});
+
+// Fetch content from URL
+async function fetchContent(url, data, dataType = 'text') {
+  try {
+    const headers = {};
+
+    if (data) {
+      const headersArray = data.split('|');
+      headersArray.forEach(header => {
+        const [key, value] = header.split('=');
+        headers[key.trim()] = value.trim().replace(/['"]/g, '');
+      });
+    }
+
+    const response = await fetchUrl(url, headers);
+    const buffer = response.content;
+    let content;
+
+    if (dataType === 'binary') {
+      content = buffer;
+    } else {
+      content = buffer.toString('utf-8');
+    }
+
+    return {
+      content,
+      finalUrl: response.finalUrl || url,
+      status: response.status,
+      headers: response.headers,
+    };
+  } catch (err) {
+    console.error('Error in fetchContent:', err);
+    return { content: null, status: 500, headers: {} };
+  }
+}
+
+// Fetch URL and handle redirects
+function fetchUrl(requestUrl, headers, redirectCount = 0) {
+  return new Promise((resolve, reject) => {
+    try {
+      if (redirectCount > 10) {
+        return reject(new Error('Too many redirects'));
+      }
+
+      const parsedUrl = url.parse(requestUrl);
+      const isHttps = parsedUrl.protocol === 'https:';
+      const options = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || (isHttps ? 443 : 80),
+        path: parsedUrl.path,
+        method: 'GET',
+        headers: headers || {},
+      };
+
+      const httpModule = isHttps ? require('https') : require('http');
+      const req = httpModule.request(options, res => {
+        let data = [];
+        res.on('data', chunk => data.push(chunk));
+        res.on('end', () => {
+          const statusCode = res.statusCode;
+
+          if (statusCode >= 300 && statusCode < 400 && res.headers.location) {
+            const redirectUrl = url.resolve(requestUrl, res.headers.location);
+            return fetchUrl(redirectUrl, headers, redirectCount + 1).then(resolve).catch(reject);
+          }
+
+          resolve({
+            content: Buffer.concat(data),
+            finalUrl: requestUrl,
+            status: statusCode,
+            headers: res.headers,
+          });
+        });
+      });
+
+      req.on('error', reject);
+      req.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+// Handle playlist requests
+async function handlePlaylistRequest(req, res, playlistUrl, data) {
+  try {
+    console.log("Playlist URL: " + playlistUrl);
+    const result = await fetchContent(playlistUrl);
+
+    if (result.status !== 200) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      return res.end('Failed to fetch playlist');
+    }
+
+    let playlistContent = result.content;
+    const baseUrl = new URL(req.url, `http://${req.headers.host}`).origin;
+    playlistContent = rewritePlaylistUrls(playlistContent, baseUrl, data);
+
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    return res.end(playlistContent);
+  } catch (err) {
+    console.error('Error in handlePlaylistRequest:', err);
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    return res.end('Error processing playlist');
+  }
+}
+
+// Fetch encryption key
+async function fetchEncryptionKey(res, url, data) {
+  try {
+    const result = await fetchContent(url, data, 'binary');
+
+    if (result.status >= 400) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      return res.end(`Failed to fetch encryption key: ${result.status}`);
+    }
+
+    res.writeHead(200, result.headers);
+    return res.end(result.content);
+  } catch (err) {
+    console.error('Error in fetchEncryptionKey:', err);
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    return res.end('Error fetching encryption key');
+  }
+}
+
+// Rewrite URLs in the M3U8 playlist
+function rewriteUrls(content, baseUrl, proxyUrl, data) {
+  try {
+    const lines = content.split('\n');
+    const rewrittenLines = [];
+    let isNextLineUri = false;
+
+    lines.forEach(line => {
+      if (line.startsWith('#')) {
+        if (line.includes('URI="')) {
+          const uriMatch = line.match(/URI="([^"]+)"/i);
+          let uri = uriMatch[1];
+
+          if (!uri.startsWith('http')) {
+            uri = new URL(uri, baseUrl).href;
+          }
+
+          const rewrittenUri = `${proxyUrl}?url=${encodeURIComponent(uri)}&data=${encodeURIComponent(data)}${line.includes('#EXT-X-KEY') ? '&key=true' : ''}`;
+          line = line.replace(uriMatch[1], rewrittenUri);
+        }
+
+        rewrittenLines.push(line);
+
+        if (line.includes('#EXT-X-STREAM-INF')) {
+          isNextLineUri = true;
+        }
+      } else if (line.startsWith('http') || isNextLineUri) {
+        const urlParam = isNextLineUri ? 'url' : 'url2';
+        let lineUrl = line;
+
+        if (!lineUrl.startsWith('http')) {
+          lineUrl = new URL(lineUrl, baseUrl).href;
+        }
+
+        const fullUrl = `${proxyUrl}?${urlParam}=${encodeURIComponent(lineUrl)}&data=${encodeURIComponent(data)}${urlParam === 'url' ? '&type=/index.m3u8' : '&type=/index.ts'}`;
+        rewrittenLines.push(fullUrl);
+
+        isNextLineUri = false;
+      } else {
+        rewrittenLines.push(line);
+      }
+    });
+
+    return rewrittenLines.join('\n');
+  } catch (err) {
+    console.error('Error in rewriteUrls:', err);
+    return content;
+  }
+}
+
+// Rewrite playlist URLs and encode headers
+function rewritePlaylistUrls(content, baseUrl, data) {
+  try {
+    const lines = content.split('\n');
+    const rewrittenLines = [];
+
+    lines.forEach(line => {
+      if (line.startsWith('#EXTINF')) {
+        rewrittenLines.push(line);
+      } else if (line.startsWith('http')) {
+        const headerSeparatorIndex = line.indexOf('|');
+        const streamUrl = headerSeparatorIndex !== -1 ? line.substring(0, headerSeparatorIndex) : line;
+
+        let base64Data = '';
+
+        if (data) {
+          base64Data = data;
+        } else if (headerSeparatorIndex !== -1) {
+          const headersString = line.substring(headerSeparatorIndex + 1);
+          const headers = headersString
+            ? headersString.split('|').map(header => {
+              const [key, value] = header.split('=');
+              const cleanValue = value ? value.replace(/^['"]|['"]$/g, '').trim() : '';
+              return `${key.trim()}=${cleanValue}`;
+            })
+            : [];
+          base64Data = headers.length > 0 ? Buffer.from(headers.join('|')).toString('base64') : '';
+        }
+
+        const newUrl = `${baseUrl}?url=${encodeURIComponent(streamUrl)}&data=${encodeURIComponent(base64Data)}`;
+        rewrittenLines.push(newUrl);
+      } else {
+        rewrittenLines.push(line);
+      }
+    });
+
+    return rewrittenLines.join('\n');
+  } catch (err) {
+    console.error('Error in rewritePlaylistUrls:', err);
+    return content;
+  }
+}
