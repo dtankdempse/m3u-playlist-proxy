@@ -7,6 +7,9 @@ http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const pathname = parsedUrl.pathname;
     const query = parsedUrl.query;
+	
+	console.log(`Incoming request: ${req.url}`);
+	console.log('Query parameters:', query);
 
     if (pathname === '/' && !parsedUrl.search) {
       const html = `<!DOCTYPE html>
@@ -258,7 +261,8 @@ label {
 </body>
 </html>`;
       res.writeHead(200, { 'Content-Type': 'text/html' });
-      return res.end(html);
+      res.end(html);
+      return;
     }
 
     if (pathname === '/playlist') {
@@ -267,10 +271,12 @@ label {
 
       if (!urlParam) {
         res.writeHead(400, { 'Content-Type': 'text/plain' });
-        return res.end('URL parameter missing');
+        res.end('URL parameter missing');
+        return;
       }
 
-      return await handlePlaylistRequest(req, res, urlParam, dataParam);
+      await handlePlaylistRequest(req, res, urlParam, dataParam);
+      return;
     }
 
     const requestUrl = query.url ? decodeURIComponent(query.url) : null;
@@ -281,35 +287,49 @@ label {
 
     if (finalRequestUrl) {
       if (query.key && query.key === 'true') {
-        return await fetchEncryptionKey(res, finalRequestUrl, data);
+        await fetchEncryptionKey(res, finalRequestUrl, data);
+        return;
       }
 
       const dataType = isMaster ? 'text' : 'binary';
       const result = await fetchContent(finalRequestUrl, data, dataType);
 
+      //console.log("Fetched content length:", result.content.length);
+
       if (result.status >= 400) {
         res.writeHead(result.status, { 'Content-Type': 'text/plain' });
-        return res.end(`Error: ${result.status}`);
+        res.end(`Error: ${result.status}`);
+        return;
       }
 
       let content = result.content;
+      //console.log("Initial content:", content);
 
       if (isMaster) {
         const baseUrl = new URL(result.finalUrl).origin;
         const proxyUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
         content = rewriteUrls(content, baseUrl, proxyUrl, query.data);
+        //console.log("Processed content:", content);
       }
-
-      res.writeHead(result.status, result.headers);
-      return res.end(content);
+      
+      //console.log("Returned content:", content);
+      
+      res.writeHead(result.status, {
+        'Content-Type': 'application/vnd.apple.mpegurl',
+        'Content-Length': Buffer.byteLength(content)
+      });
+      res.end(content);
+      return;
     }
 
     res.writeHead(400, { 'Content-Type': 'text/plain' });
-    return res.end('Bad Request');
+    res.end('Bad Request');
   } catch (err) {
     console.error('Error handling request:', err);
-    res.writeHead(500, { 'Content-Type': 'text/plain' });
-    res.end('Internal Server Error');
+    if (!res.headersSent) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Internal Server Error');
+    }
   }
 }).listen(4123, '0.0.0.0', () => {
   console.log('Server is running on port 4123');
