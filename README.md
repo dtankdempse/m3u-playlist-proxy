@@ -27,7 +27,6 @@ You can easily deploy this Worker to your Cloudflare account by following these 
 ## Setup with Docker
 
 The M3U Playlist Proxy is also available as a Docker image, allowing you to easily deploy it in a containerized environment. By using Docker, you can quickly start the proxy without needing to install dependencies or manually configure the environment.
-Pulling the Docker Image
 
 ### Pulling the Docker Image
 
