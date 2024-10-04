@@ -23,3 +23,7 @@ You can easily deploy this Worker to your Cloudflare account by following these 
 5. Save and deploy the Worker.
 
 6. Use the automatically generated Worker URL to start proxying your streams.
+
+## Setup with Docker
+
+The Docker image has been temporarily removed while an issue is being resolved.
