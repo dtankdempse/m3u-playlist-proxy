@@ -334,7 +334,8 @@ async function handlePlaylistRequest(request, playlistUrl, data) {
 
 // Function to fetch encryption key
 async function fetchEncryptionKey(url, data) {
-  const result = await fetchContent(url, data, 'binary'); // Pass 'binary' as the dataType
+  const updatedUrl = url.includes('videohls.ru') ? url.replace('videohls.ru', 'onlinehdhls.ru') : url;
+  const result = await fetchContent(updatedUrl, data, 'binary'); // Pass 'binary' as the dataType
 
   if (result.status >= 400) {
     return new Response(`Failed to fetch encryption key: ${result.status}`, { status: 500 });
