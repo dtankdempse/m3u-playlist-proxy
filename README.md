@@ -2,6 +2,8 @@
 
 The M3U Playlist Proxy is a lightweight and effective tool designed to forward essential headers to proxy M3U playlist streams. Acting as a bridge between your client and the server, it ensures that important headers (such as User-Agent, Referer, etc.) are accurately passed along. This setup allows IPTV applications to reliably access streams that need specific headers in place.
 
+**Note:** Ensure that you use only the standard M3U8 playlist (playlist.m3u8) when setting up the M3U Playlist Proxy. Other formats, such as TiviMate, Kodi, and VLC, are not compatible and will not work with this setup.
+
 ## Recommended Setup for Windows Users
 
 For Windows users, this is the recommended method to use the M3U Playlist Proxy, as it gives you complete control without the limitations of the Cloudflare Worker’s 100,000 requests per day.
