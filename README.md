@@ -2,7 +2,7 @@
 
 The M3U Playlist Proxy is a lightweight and effective tool designed to forward essential headers to proxy M3U playlist streams. Acting as a bridge between your client and the server, it ensures that important headers (such as User-Agent, Referer, etc.) are accurately passed along. This setup allows IPTV applications to reliably access streams that need specific headers in place.
 
-## Recommended Setup for Windows users
+## Recommended Setup for Windows Users
 
 For Windows users, this is the recommended method to use the M3U Playlist Proxy, as it gives you complete control without the limitations of the Cloudflare Worker’s 100,000 requests per day.
 
