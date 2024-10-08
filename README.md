@@ -8,6 +8,8 @@ The M3U Playlist Proxy is a lightweight and effective tool designed to forward e
 
 For Windows users, this is the recommended method to use the M3U Playlist Proxy, as it gives you complete control without the limitations of the Cloudflare Worker’s 100,000 requests per day.
 
+https://github.com/user-attachments/assets/5888656b-1dee-4dd2-8494-541c2934657d
+
 Simply download and extract the ZIP file, then run the setup_service.bat. This will install the m3u-playlist-proxy as a Windows service, allowing it to run seamlessly in the background. If you're not using a Windows machine or prefer a different setup, feel free to use one of the other options below.
 
 [![Download ZIP](https://img.shields.io/badge/Download-ZIP-brightgreen)](https://github.com/dtankdempse/m3u-playlist-proxy/raw/refs/heads/main/win/m3u-playlist-proxy.zip)
