@@ -42,12 +42,12 @@ The M3U Playlist Proxy is also available as a Docker image, allowing you to easi
 
 To get started, pull the latest version of the M3U Playlist Proxy Docker image with the following command:
 
-`$ docker pull ghcr.io/dtankdempse/m3u-playlist-proxy:latest`
+`docker pull dtankdemp/m3u-playlist-proxy:latest`
 
 ### Running the M3U Playlist Proxy Container
 
 Once you’ve pulled the image, you can start the container using:
 
-`$ docker run -d -p <port>:4123 ghcr.io/dtankdempse/m3u-playlist-proxy:latest`
+`docker run -d -p <port>:4123 dtankdemp/m3u-playlist-proxy:latest`
 
 This command runs the proxy on port 4123, allowing your IPTV application to connect to it locally or remotely (depending on your setup) to access M3U playlist streams with the necessary headers correctly forwarded. Adjust the port if needed, based on your environment.
