@@ -16,6 +16,8 @@ Simply download and extract the ZIP file, then run the setup_service.bat. This w
 
 ## Setup with Cloudflare Worker
 
+**Note:** The Cloudflare Worker option no longer works with the DaddyLive Playlist.
+
 Cloudflare Workers allows you to run JavaScript code at the edge, right on Cloudflare's infrastructure, with a generous free tier. A free Cloudflare account offers **100,000 requests per day**, which is **more than enough** to proxy and manage these streams efficiently.
 
 https://github.com/user-attachments/assets/7b4b04a6-00b6-4df9-b09f-0d61f9d16f15
