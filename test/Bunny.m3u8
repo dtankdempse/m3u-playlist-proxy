@@ -1,4 +1,0 @@
-#EXTM3U
-#EXTINF:-1 tvg-id="live2" tvg-name="Bunny Live Stream" tvg-logo="https://example.com/logo.png" group-title="Live Streams",Bunny Live Stream
-https://live-hls-abr-cdn.livepush.io/live/bigbuckbunnyclip/index.m3u8
-
