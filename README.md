@@ -6,7 +6,7 @@ The M3U Playlist Proxy is a lightweight and effective tool designed to forward e
 
 ## Recommended Setup for Windows Users
 
-For Windows users, this is the recommended method to use the M3U Playlist Proxy
+For Windows users, this is the recommended method to use the M3U Playlist Proxy.
 
 https://github.com/user-attachments/assets/5888656b-1dee-4dd2-8494-541c2934657d
 
