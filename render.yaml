@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: m3u-playlist-proxy
+    env: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "node index.js"
+    routes:
+      - src: "/*"
+        dest: "index.js"
