@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: m3u-playlist-proxy
-    env: node
-    plan: free
-    buildCommand: "npm install"
-    startCommand: "bash start.sh"
