@@ -47,7 +47,7 @@ Click the button below to deploy this project to Vercel.
 
 ## Deploy to Render
 
-Render provides a free tier with 500 MB of storage and 100 GB of bandwidth per month, making it a suitable option for deploying the m3u-playlist-proxy. This should be ample for personal use and proxying streams with moderate traffic requirements.
+Render provides a free tier with 500 MB of storage and 100 GB of bandwidth per month, making it a suitable option for deploying the m3u-playlist-proxy. This should be more than enough for personal use and proxying streams with moderate traffic requirements.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dtankdempse/m3u-playlist-proxy)   
 
