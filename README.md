@@ -39,7 +39,7 @@ Click the button below to deploy this project to Vercel.
 - After confirming the settings, click **Deploy**. Vercel will automatically build and deploy the project based on the configuration defined in the repository.
 
 5. **View the Live Project**:
-   - Once the deployment is complete, you will see a link to access your newly deployed project.
+- Once the deployment is complete, you will see a link to access your newly deployed project.
 
    **IMPORTANT**
 
