@@ -45,18 +45,6 @@ Click the button below to deploy this project to Vercel.
 
    If you click the link directly and receive a 400 Bad Request error, this may be due to a `?vercelToolbarCode=xxxxxx` parameter being added to the URL. Simply remove this parameter from the address bar and reload the page.
 
-## Deploy to Render
-
-Render provides a free tier with 500 MB of storage and 100 GB of bandwidth per month, making it a suitable option for deploying the m3u-playlist-proxy. This should be more than enough for personal use and proxying streams with moderate traffic requirements.
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dtankdempse/m3u-playlist-proxy)   
-
-## Deploy to Netlify
-
-Netlify’s free tier includes 300 build minutes and 100 GB of bandwidth per month, which is more than sufficient to host the m3u-playlist-proxy. It’s an ideal choice for handling personal streaming needs and simple deployment setups.
-
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/dtankdempse/m3u-playlist-proxy)
-
 ## Setup with Docker
 
 The M3U Playlist Proxy is also available as a Docker image, allowing you to easily deploy it in a containerized environment. By using Docker, you can quickly start the proxy without needing to install dependencies or manually configure the environment.
