@@ -4,7 +4,4 @@ services:
     env: node
     plan: free
     buildCommand: "npm install"
-    startCommand: "node index.js"
-    routes:
-      - src: "/*"
-        dest: "index.js"
+    startCommand: "bash start.sh"
