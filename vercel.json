@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "index.js"
     }
-  ]
+  ],
+  "build": {
+    "env": {
+      "VERCEL_DISABLE_TOOLBAR": "1"
+    }
+  }
 }
+
