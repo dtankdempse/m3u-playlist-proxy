@@ -14,6 +14,37 @@ Simply download and extract the ZIP file, then run the setup_service.bat. This w
 
 [![Download ZIP](https://img.shields.io/badge/Download-ZIP-brightgreen)](https://github.com/dtankdempse/m3u-playlist-proxy/raw/refs/heads/main/win/m3u-playlist-proxy.zip)
 
+## Deploy to Vercel
+
+Vercel offers a free tier, which is sufficient to deploy the `m3u-playlist-proxy` and should be enough to handle proxying streams for personal use.
+
+https://github.com/user-attachments/assets/4fd3c242-b1d0-4f2b-bccb-d0b98b8ba94e
+
+Click the button below to deploy this project to Vercel.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/dtankdempse/m3u-playlist-proxy)
+
+### Steps to Deploy:
+
+1. **Click the Deploy Button**:
+- When you click the **Deploy with Vercel** button, you'll be redirected to Vercel's platform. It will automatically import the project template from this GitHub repository.
+
+2. **Log in Using GitHub**:
+- It is recommended to log in to Vercel using a GitHub account. This makes the integration smoother and allows Vercel to access the repository directly. If you don’t have a Vercel account, you can sign up for free.
+
+3. **Configure Project Settings**:
+- After logging in, Vercel will guide you through the project setup. You can review the project name and select the team or personal account under which you want to deploy the project.
+
+4. **Deploy the Project**:
+- After confirming the settings, click **Deploy**. Vercel will automatically build and deploy the project based on the configuration defined in the repository.
+
+5. **View the Live Project**:
+   - Once the deployment is complete, you will see a link to access your newly deployed project.
+
+   **IMPORTANT**
+
+   If you click the link directly and receive a 400 Bad Request error, this may be due to a `?vercelToolbarCode=xxxxxx` parameter being added to the URL. Simply remove this parameter from the address bar and reload the page.
+
 ## Setup with Docker
 
 The M3U Playlist Proxy is also available as a Docker image, allowing you to easily deploy it in a containerized environment. By using Docker, you can quickly start the proxy without needing to install dependencies or manually configure the environment.
