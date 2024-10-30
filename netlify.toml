@@ -1,9 +1,0 @@
-[build] 
-  node_version = "20"
-  publish = "."
-  command = "npm install && node index.js"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.js"
-  status = 200
