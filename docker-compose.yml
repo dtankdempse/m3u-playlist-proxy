@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  m3u-playlist-proxy:
+    image: dtankdemp/m3u-playlist-proxy
+    ports:
+      - "4912:4123"
