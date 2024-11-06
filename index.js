@@ -1,5 +1,7 @@
 const http = require('http');
+const https = require('https');
 const url = require('url');
+const zlib = require('zlib');
 
 // Create the HTTP server
 http.createServer(async (req, res) => {
@@ -20,156 +22,204 @@ http.createServer(async (req, res) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M3U Playlist Proxy</title>
     <style>
-	
-body{
-	color: #626262;
-}
-/* General Form Styling */
-form {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f7f7f7;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+    body{
+        color: #626262;
+    }
+    /* General Form Styling */
+    form {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f7f7f7;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-/* Styling for Input Fields */
-input[type="text"] {
-    width: calc(50% - 10px);
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-bottom: 10px;
-	color: #626262;
-}
-
-input[type="text"]:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-}
-
-/* Styling for Add More and Submit Buttons */
-button {
-  padding: 10px 15px;
-  font-size: 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
-  width: 45%;
-  margin-left: 20px;
-  align-content: center;
-}
-
-button#add-more {
-	background-color: #007bff;
-    color: white;
-}
-
-button[type="submit"] {
-    background-color: #28a745;
-    color: white;
-}
-
-button:hover {
-    opacity: 0.9;
-}
-
-button:focus {
-    outline: none;
-}
-
-/* Styling for Text Area */
-textarea {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-top: 10px;
-    resize: none;
-	color: #626262;
-}
-
-/* Styling for Header Pair Div */
-.header-pair {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-
-h3,h4 {
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: #626262;
-}
-form {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f7f7f7;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
- .container {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
- .footer {
-    max-width: 600px;
-    margin: 0 auto;
-    padding-top:20px;
-    padding-bottom:10px;
-    text-align:center;
-}
-
-
-textarea#result {
-    width: 100%;
-    max-width: 600px;
-    display: block;
-    margin: 20px auto;
-    padding: 10px;
-    font-size: 16px;
-    border
-
-
-/* Label Styling */
-label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: block;
-}
-
-/* Basic Responsive Design */
-@media (max-width: 600px) {
+    /* Styling for Input Fields */
     input[type="text"] {
-        width: 100%;
+        width: calc(50% - 10px);
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        color: #626262;
+    }
+
+    input[type="text"]:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+
+    /* Styling for Add More and Submit Buttons */
+    button {
+        padding: 10px 15px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+        width: 45%;
+        margin-left: 20px;
+        align-content: center;
+    }
+
+    button#add-more {
+        background-color: #007bff;
+        color: white;
+    }
+
+    button[type="submit"] {
+        background-color: #28a745;
+        color: white;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+
+    button:focus {
+        outline: none;
+    }
+	
+	select {		
+	  width: 100%;
+	  font-size: 16px;
+	  padding: 10px;
+	  font-size: 16px;
+	  border: 1px solid #ccc;
+	  border-radius: 4px;
+	  margin-bottom: 20px;
+	  background-color: #fff;
+	  color: #626262;			
+	}
+
+    /* Styling for Text Area */
+    textarea {
+        width: 50%;
+		max-width: 600px;
+        margin: 0 auto;
+        display: block;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-top: 10px;
+        resize: none;
+        color: #626262;
+    }
+
+    /* Styling for Header Pair Div */
+    .header-pair {
+        display: flex;
+        justify-content: space-between;
         margin-bottom: 10px;
     }
 
-    .header-pair {
-        flex-direction: column;
+    h3, h4 {        
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #626262;
     }
-}
+	
+	
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+	
+		
+	.epg_container {
+		float: right;
+		margin-right: 10px;
+		position: relative;
+		top: -10px;		
+	}
 
+    .footer {
+        max-width: 600px;
+        margin: 0 auto;
+        padding-top: 20px;
+        padding-bottom: 10px;
+        text-align: center;
+    }
+
+
+    /* Basic Responsive Design */
+    @media (max-width: 600px) {
+        input[type="text"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .header-pair {
+            flex-direction: column;
+        }
+    }
+	
+	pre {
+	  background-color: #eaeaea;
+	  color: #000;
+	  padding-top: 15px;
+	  padding-left: 15px;
+	}
+
+    /* Styling for Help Overlay */
+    #help-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    #help-content {
+        position: relative;
+        background-color: #fff;
+        color: #333;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 80%;
+		width: 60%;
+		max-height: 70%;
+		overflow: scroll;
+    }
+
+	#close-help {
+	  position: absolute;
+	  top: 5px;
+	  right: 20px;
+	  background: none;
+	  border: none;
+	  font-size: 34px;
+	  font-weight: bold;
+	  color: #ff4e4e;
+	  cursor: pointer;
+	}
+
+    #close-help:hover {
+        opacity: 0.7;
+    }
     </style>
 </head>
-<body><h3>M3U Playlist Proxy</h3>
-     <div class="container"><p>Use the form below to generate a playlist with the necessary headers. For example, if the server requires a "Referer: http://example.com" header to allow streaming, you would enter "Referer" as the Header Name and "http://example.com" as the Header Value.</p></div>
+<body>
+    <center><h3>M3U Playlist Proxy</h3></center>
+    <div class="container">
+        <p>Use the form below to generate a playlist with the necessary headers. For example, if the server requires a "Referer: http://example.com" header to allow streaming, you would enter "Referer" as the Header Name and "http://example.com" as the Header Value. <a href="#" id="help-button">More Info.</a></p>
+    </div>
 
     <form id="headerForm">
         <div>
-            <label for="playlistUrl">Playlist URL:</label><br>
+            <label for="playlistUrl">Playlist URL (use comma for multiple URLs):</label><div class="epg_container"><input type="checkbox" id="epgMerging" checked><label style="font-size:13px;margin-left:2px;">Merge epg's</label></div>
             <input type="text" id="playlistUrl" name="playlistUrl" placeholder="Enter playlist URL" style="width: 96%; margin-bottom: 20px;">
         </div>
         
@@ -181,84 +231,172 @@ label {
         <button type="submit">Generate Playlist URL</button>
     </form>
 
-    <h4>Generated Playlist URL:</h4>
+    <center><h4>Generated Playlist URL:</h4></center>
 
     <textarea id="result" rows="4" cols="80" readonly></textarea>
-    <div class="container"><p>Once the URL has been generated, you can use a URL shortener like <a href="https://tinyurl.com" target=_blank">TinyURL.com</a> to shorten it. This will make it much easier to add the URL as a M3U playlist within your IPTV application.</p>
+    <div class="container">
+        <p>Once the URL has been generated, you can use a URL shortener like <a href="https://tinyurl.com" target="_blank">TinyURL.com</a> to shorten it. This will make it much easier to add the URL as a M3U playlist within your IPTV application.</p>
+        <div class="container" id="firewall-warning"></div>
+    </div>
+
+    <div class="footer">Created by <a href="https://github.com/dtankdempse/m3u-playlist-proxy">Tank Dempse</a></div>
+
+    <div id="help-overlay">
+        <div id="help-content">
+            <span id="close-help">&times;</span>
+			
+	<h4>Adding Playlist URL(s)</h4>
+
+	<p>When adding multiple playlist URLs, separate them with a comma. This will merge all playlists into a single combined list. If multiple EPGs are defined in the playlists using the <code>url-tvg</code> tag, they will also be merged into a single EPG file.</p>
+
+	<strong>Example:</strong>
+	<pre>
+http://example.com/playlist1.m3u8,http://example.com/playlist2.m3u8,http://example.com/playlist3.m3u8
+	</pre>
+
+	<p>The example above will merge three playlists into a single playlist.</p>
+
+	<h4>Merge EPGs</h4> 
+
+	<p>When checked, this option combines EPG sources (specified by <code>tvg-url</code>) into a single EPG file if more than one playlist is used. If only one playlist is used, the <code>tvg-url</code> will remain untouched. This provides a consolidated channel guide across merged playlists. Leaving this unchecked removes all <code>tvg-url</code> tags when multiple sources are detected, helping to reduce bandwidth usage. This is especially useful on free-tier services like Vercel.</p>
+
+
+    <h4>Headers in the Playlist</h4>
+    <p>If specific headers for applications like VLC, TiviMate, or Kodi are included within the playlist, MPP will use those headers to proxy the individual streams. This means the headers embedded in the playlist itself will be utilized directly when accessing a particular stream.</p>
+
+
+    <h4>Headers in the Header Fields</h4>
+    <p>If no headers are present within the playlist for a given stream, MPP will fall back to using the headers specified in the "Header Name / Value" fields of the form. This allows for a default set of headers to be used when the playlist lacks specific instructions.</p>
+
+    <h4>No Headers Set</h4>
+    <p>If neither the playlist nor the "Header Name / Value" fields provide any headers, the streams will be accessed without any headers, essentially passing through unmodified, which means they won't be explicitly proxied by MPP.</p>
+
+    <h4>Priority System for Headers</h4>
+    <p>Overall, MPP outlines a priority system for using headers:</p>
+    <ol>
+        <li>Headers embedded in the playlist.</li>
+        <li>Headers provided via form input.</li>
+        <li>No headers at all.</li>
+	</ol>
 	
-	<div class="container" id="firewall-warning"></div>
-	</div>
+    <h4>Supported Formats</h4>
+    <p>The following are supported formats for specifying headers within a playlist:</p>
 
-<div class="footer">Created by  <a href="https://github.com/dtankdempse/m3u-playlist-proxy">Tank Dempse</a></div>
+    <strong>Format Example 1:</strong>
+    <pre>
+#EXTINF:-1,Channel Name 
+http://example.com/playlist.m3u8|Referer="http://example.com"|User-Agent="VLC/3.0.20 LibVLC/3.0.20"
+    </pre>
+
+    <strong>Format Example 2:</strong>
+    <pre>
+#EXTINF:-1,Channel Name 
+http://example.com/playlist.m3u8|Referer=http://example.com|User-Agent=VLC/3.0.20 LibVLC/3.0.20
+    </pre>
+
+    <strong>Format Example 3:</strong>
+    <pre>
+#EXTINF:-1,Channel Name
+http://example.com/playlist.m3u8|Referer=http%3A%2F%2Fexample.com&User-Agent=VLC%2F3.0.20%20LibVLC%2F3.0.20
+    </pre>
+
+    <strong>Format Example 4:</strong>
+    <pre>
+#EXTINF:-1,Channel Name
+#EXTVLCOPT:http-referrer=http://example.com
+#EXTVLCOPT:http-user-agent=VLC/3.0.20 LibVLC/3.0.20
+http://example.com/playlist.m3u8
+    </pre>
+        </div>
+    </div>
+
     <script>
-    // Function to add more header input fields
-    document.getElementById('add-more').addEventListener('click', function () {
-        const headerPair = document.createElement('div');
-        headerPair.classList.add('header-pair');
-        headerPair.innerHTML = 
-            "<input type='text' name='headerName' placeholder='Header Name'>" +
-            "<input type='text' name='headerValue' placeholder='Header Value'>";
-        document.getElementById('headerForm').insertBefore(headerPair, document.getElementById('add-more'));
-    });
+        document.getElementById('add-more').addEventListener('click', function () {
+            const headerPair = document.createElement('div');
+            headerPair.classList.add('header-pair');
+            headerPair.innerHTML = 
+                "<input type='text' name='headerName' placeholder='Header Name'>" +
+                "<input type='text' name='headerValue' placeholder='Header Value'>";
+            document.getElementById('headerForm').insertBefore(headerPair, document.getElementById('add-more'));
+        });
 
-    // Function to handle form submission and generate the full URL
-    document.getElementById('headerForm').addEventListener('submit', function (event) {
-        event.preventDefault();
+		document.getElementById('headerForm').addEventListener('submit', function (event) {
+			event.preventDefault();
 
-        const playlistUrl = document.getElementById('playlistUrl').value.trim();
-        if (!playlistUrl) {
-            alert('Please enter a Playlist URL.');
-            return;
-        }
+			const playlistUrl = document.getElementById('playlistUrl').value.trim();
+			if (!playlistUrl) {
+				alert('Please enter a Playlist URL.');
+				return;
+			}
 
-        let headers = [];
-        const headerPairs = document.querySelectorAll('.header-pair');
+			// Collect headers
+			let headers = [];
+			const headerPairs = document.querySelectorAll('.header-pair');
 
-        headerPairs.forEach(pair => {
-            const headerName = pair.querySelector('input[name="headerName"]').value;
-            const headerValue = pair.querySelector('input[name="headerValue"]').value;
-            if (headerName && headerValue) {
-                headers.push(headerName + "=" + headerValue);
+			headerPairs.forEach(pair => {
+				const headerName = pair.querySelector('input[name="headerName"]').value;
+				const headerValue = pair.querySelector('input[name="headerValue"]').value;
+				if (headerName && headerValue) {
+					headers.push(headerName + "=" + headerValue);
+				}
+			});
+
+			const baseUrl = window.location.origin;
+			let fullUrl = baseUrl + "/playlist?url=" + encodeURIComponent(playlistUrl);
+
+			// Encode headers if present
+			if (headers.length > 0) {
+				const headerString = headers.join('|');
+				const base64Encoded = btoa(headerString);
+				const urlEncodedData = encodeURIComponent(base64Encoded);
+				fullUrl += "&data=" + urlEncodedData;
+			}
+
+			// Check if epgMerging is checked, and add it to the URL
+			const epgMergingChecked = document.getElementById('epgMerging').checked;
+			if (epgMergingChecked) {
+				fullUrl += "&epgMerging=true";
+			}
+
+			document.getElementById('result').value = fullUrl;
+		});
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const host = window.location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1') {
+                const warning = document.createElement('div');
+                warning.classList.add('container');
+                warning.style.color = '#ff4e4e';
+                warning.style.fontSize = '20px';
+                warning.style.textAlign = 'center';
+                warning.style.fontWeight = 'bold';
+                warning.innerHTML = '<p>Warning: If you are accessing this page via <code>127.0.0.1</code> or <code>localhost</code>, proxying will not work on other devices. Please load this page using your computers IP address (e.g., <code>192.168.x.x</code>) and port in order to access the playlist from other devices on your network.</p><p>How to locate ip address on <a href="https://www.youtube.com/watch?v=UAhDHXN2c6E" target="_blank">Windows</a> or <a href="https://www.youtube.com/watch?v=gaIYP4TZfHI" target="_blank">Linux</a>.</p>';
+                document.body.insertBefore(warning, document.body.firstChild);
             }
         });
 
-        if (headers.length > 0) {
-            const headerString = headers.join('|');
-            const base64Encoded = btoa(headerString);
-            const urlEncodedData = encodeURIComponent(base64Encoded);
-            const baseUrl = window.location.origin;
-            const fullUrl = baseUrl + "/playlist?url=" + encodeURIComponent(playlistUrl) + "&data=" + urlEncodedData;
+        document.addEventListener('DOMContentLoaded', function() {
+            const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+            const warningMessage = 
+            '<p>Also, ensure that port <strong>' + port + '</strong> is open and allowed through your Windows (<a href="https://youtu.be/zOZWlTplrcA?si=nGXrHKU4sAQsy18e&t=18" target="_blank">how to</a>) or Linux  (<a href="https://youtu.be/7c_V_3nWWbA?si=Hkd_II9myn-AkNnS&t=12" target="_blank">how to</a>) firewall settings. This will enable other devices, such as Firestick, Android, and others, to connect to the server and request the playlist through the proxy.</p>';
+            
+            document.getElementById('firewall-warning').innerHTML = warningMessage;
+        });
 
-            document.getElementById('result').value = fullUrl;
-        } else {
-            alert('Please add at least one header.');
-        }
-    });
-	document.addEventListener('DOMContentLoaded', function() {
-		const host = window.location.hostname;
-		console.log("Hostname detected:", host); // Debugging line to check hostname
-		if (host === 'localhost' || host === '127.0.0.1') {
-			console.log("Triggering warning for localhost or 127.0.0.1"); // Debugging line for condition check
-			const warning = document.createElement('div');
-			warning.classList.add('container');
-			warning.style.color = '#ff4e4e';
-			warning.style.fontSize = '20px';
-			warning.style.textAlign = 'center';
-			warning.style.fontWeight = 'bold';
-			warning.innerHTML = '<p>Warning: If you are accessing this page via <code>127.0.0.1</code> or <code>localhost</code>, proxying will not work on other devices. Please load this page using your computers IP address (e.g., <code>192.168.x.x</code>) and port in order to access the playlist from other devices on your network.</p><p>How to locate ip address on <a href="https://www.youtube.com/watch?v=UAhDHXN2c6E" target=_blank">Windows</a> or <a href="https://www.youtube.com/watch?v=gaIYP4TZfHI" target=_blank">Linux</a>.</p>';
-			document.body.insertBefore(warning, document.body.firstChild);
-		}
-	});
-	document.addEventListener('DOMContentLoaded', function() {		
-		const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-		
-		const warningMessage = 
-    '<p>Also, ensure that port <strong>' + port + '</strong> is open and allowed through your Windows (<a href="https://youtu.be/zOZWlTplrcA?si=nGXrHKU4sAQsy18e&t=18" target=_blank">how to</a>) or Linux  (<a href="https://youtu.be/7c_V_3nWWbA?si=Hkd_II9myn-AkNnS&t=12" target=_blank">how to</a>) firewall settings. This will enable other devices, such as Firestick, Android, and others, to connect to the server and request the playlist through the proxy.</p>';
-		
-		document.getElementById('firewall-warning').innerHTML = warningMessage;
-	});
-</script>
+        document.getElementById('help-button').addEventListener('click', function() {
+            document.getElementById('help-overlay').style.display = 'flex';
+        });
 
+        document.getElementById('close-help').addEventListener('click', function() {
+            document.getElementById('help-overlay').style.display = 'none';
+        });
+
+        document.getElementById('help-overlay').addEventListener('click', function(event) {
+            if (event.target === document.getElementById('help-overlay')) {
+                document.getElementById('help-overlay').style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>`;
       res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -266,19 +404,39 @@ label {
       return;
     }
 
-    if (pathname === '/playlist') {
-      const urlParam = query.url;
-      const dataParam = query.data;
+	if (pathname === '/playlist') {
+	  const urlParam = query.url;
+	  const dataParam = query.data || null;
+	  const epgMerging = query.epgMerging === 'true';
 
-      if (!urlParam) {
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('URL parameter missing');
-        return;
-      }
+	  if (!urlParam) {
+		res.writeHead(400, { 'Content-Type': 'text/plain' });
+		res.end('URL parameter missing');
+		return;
+	  }
 
-      await handlePlaylistRequest(req, res, urlParam, dataParam);
-      return;
-    }
+	  await handlePlaylistRequest(req, res, urlParam, dataParam, epgMerging);
+	  return;
+	}
+	
+	if (pathname === '/Epg') {
+		const dataParam = query.data;
+		if (!dataParam) {
+		  res.writeHead(400, { 'Content-Type': 'text/plain' });
+		  return res.end('Data parameter missing');
+		}
+
+		try {
+		  const mergedEpg = await epgMerger(dataParam);
+		  res.writeHead(200, { 'Content-Type': 'application/xml' });
+		  res.end(mergedEpg);
+		} catch (error) {
+		  console.error('Error in epgMerger:', error);
+		  res.writeHead(500, { 'Content-Type': 'text/plain' });
+		  res.end('Failed to merge EPGs');
+		}
+		return;
+	}
 
     const requestUrl = query.url ? decodeURIComponent(query.url) : null;
     const secondaryUrl = query.url2 ? decodeURIComponent(query.url2) : null;
@@ -419,28 +577,59 @@ function fetchUrl(requestUrl, headers, redirectCount = 0) {
 }
 
 // Handle playlist requests
-async function handlePlaylistRequest(req, res, playlistUrl, data) {
+async function handlePlaylistRequest(req, res, playlistUrl, data, epgMergingEnabled) {
   try {
-    console.log("Playlist URL: " + playlistUrl);
-    const result = await fetchContent(playlistUrl);
+    const urls = playlistUrl.split(',');
+    let combinedContent = '';
+    const epgUrls = new Set();
 
-    if (result.status !== 200) {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      return res.end('Failed to fetch playlist');
+    const baseUrl = new URL(req.url, `http://${req.headers.host}`).origin;
+
+    for (const url of urls) {
+      console.log("Fetching playlist URL: " + url.trim());
+      const result = await fetchContent(url.trim(), null, 'text');
+      if (result.status !== 200) continue;
+
+      let playlistContent = result.content;
+
+      const epgMatch = playlistContent.match(/#EXTM3U.*?url-tvg="(.*?)"/);
+      if (epgMatch && epgMatch[1]) {
+        epgUrls.add(epgMatch[1]);
+        playlistContent = playlistContent.replace(epgMatch[0], '');
+      } else {
+        playlistContent = playlistContent.replace(/^#EXTM3U\s*\n?/, '');
+      }
+
+      playlistContent = rewritePlaylistUrls(playlistContent, baseUrl, data);
+      combinedContent += playlistContent + '\n';
     }
 
-    let playlistContent = result.content;
-    const baseUrl = new URL(req.url, `http://${req.headers.host}`).origin;
-    playlistContent = rewritePlaylistUrls(playlistContent, baseUrl, data);
+    if (epgUrls.size > 1 && epgMergingEnabled) {
+      // Merge EPGs if epgMerging is enabled and there are multiple EPGs
+      const epgString = Array.from(epgUrls).join(',');
+      const encodedEpg = Buffer.from(epgString).toString('base64');
+      const rewrittenEpgUrl = `${baseUrl}/Epg?data=${encodedEpg}`;
+      combinedContent = `#EXTM3U url-tvg="${rewrittenEpgUrl}"\n${combinedContent.trim()}`;
+    } else if (epgUrls.size === 1) {
+      // Use a single EPG URL if only one exists
+      const singleEpgUrl = Array.from(epgUrls)[0];
+      combinedContent = `#EXTM3U url-tvg="${singleEpgUrl}"\n${combinedContent.trim()}`;
+    } else if (epgUrls.size > 1 && !epgMergingEnabled) {
+      // Strip EPG URLs if multiple are present and merging is disabled
+      combinedContent = `#EXTM3U\n${combinedContent.trim()}`;
+    } else {
+      combinedContent = `#EXTM3U\n${combinedContent.trim()}`;
+    }
 
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    return res.end(playlistContent);
+    return res.end(combinedContent.trim());
   } catch (err) {
     console.error('Error in handlePlaylistRequest:', err);
     res.writeHead(500, { 'Content-Type': 'text/plain' });
     return res.end('Error processing playlist');
   }
 }
+
 
 // Fetch encryption key
 async function fetchEncryptionKey(res, url, data) {
@@ -511,38 +700,112 @@ function rewriteUrls(content, baseUrl, proxyUrl, data) {
   }
 }
 
+// Dedicated fetch for EPG's
+function fetchEpgContent(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https') ? https : http;
+
+    client.get(url, (response) => {
+      const statusCode = response.statusCode;
+      const headers = response.headers || {};
+
+      if (statusCode !== 200) {
+        response.resume(); 
+        return reject(new Error(`Request failed with status code: ${statusCode}`));
+      }
+
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        const encoding = headers['content-encoding'] || ''; // Ensure encoding is defined
+
+        try {
+          let content;
+          if (encoding.includes('gzip')) content = zlib.gunzipSync(buffer);
+          else if (encoding.includes('deflate')) content = zlib.inflateSync(buffer);
+          else content = buffer;
+
+          resolve(content.toString('utf-8'));
+        } catch (decompressionError) {
+          reject(new Error(`Decompression failed: ${decompressionError.message}`));
+        }
+      });
+    }).on('error', (error) => reject(error));
+  });
+}
+
 // Rewrite playlist URLs and encode headers
 function rewritePlaylistUrls(content, baseUrl, data) {
   try {
     const lines = content.split('\n');
     const rewrittenLines = [];
+    let vlcHeaders = [];
 
-    lines.forEach(line => {
+    lines.forEach((line, index) => {
       if (line.startsWith('#EXTINF')) {
         rewrittenLines.push(line);
-      } else if (line.startsWith('http')) {
+      } else if (line.startsWith('http') && !line.includes('inputstream.adaptive')) {
         const headerSeparatorIndex = line.indexOf('|');
         const streamUrl = headerSeparatorIndex !== -1 ? line.substring(0, headerSeparatorIndex) : line;
 
         let base64Data = '';
 
-        if (data) {
-          base64Data = data;
-        } else if (headerSeparatorIndex !== -1) {
+        // Handling Kodi and Tivimate playlist headers
+        if (headerSeparatorIndex !== -1) {
           const headersString = line.substring(headerSeparatorIndex + 1);
-          const headers = headersString
-            ? headersString.split('|').map(header => {
-              const [key, value] = header.split('=');
-              const cleanValue = value ? value.replace(/^['"]|['"]$/g, '').trim() : '';
-              return `${key.trim()}=${cleanValue}`;
+          const decodedHeadersString = decodeURIComponent(headersString);
+          const headers = decodedHeadersString
+            ? decodedHeadersString.split('&').map(header => {
+              const [key, ...valueParts] = header.split('=');
+              let cleanKey = key.trim();
+              const cleanValue = valueParts.length > 0 ? valueParts.join('=').replace(/^['"]|['"]$/g, '').trim() : '';
+
+              // Dynamically adjust the header keys for VLC format
+              if (cleanKey === 'referrer') {
+                cleanKey = 'Referer';
+              }
+
+              return `${cleanKey}=${cleanValue}`;
             })
             : [];
+
           base64Data = headers.length > 0 ? Buffer.from(headers.join('|')).toString('base64') : '';
+        } else if (vlcHeaders.length > 0) {
+          // Use VLC headers if available
+          const formattedVlcHeaders = vlcHeaders.map(header => {
+            const [key, value] = header.split('=');
+            let cleanKey = key.replace('http-', '').trim();
+            if (cleanKey === 'referrer') cleanKey = 'Referer';
+            const capitalizedKey = cleanKey.charAt(0).toUpperCase() + cleanKey.slice(1);
+            const cleanValue = value ? value.replace(/^['"]|['"]$/g, '').trim() : '';
+            return `${capitalizedKey}=${cleanValue}`;
+          });
+          base64Data = Buffer.from(formattedVlcHeaders.join('|')).toString('base64');
+          vlcHeaders = [];
+        } else if (data) {
+          base64Data = data;
         }
 
-        const newUrl = `${baseUrl}?url=${encodeURIComponent(streamUrl)}&data=${encodeURIComponent(base64Data)}`;
-        rewrittenLines.push(newUrl);
-      } else {
+        if (base64Data) {
+          const newUrl = `${baseUrl}?url=${encodeURIComponent(streamUrl)}&data=${encodeURIComponent(base64Data)}`;
+          rewrittenLines.push(newUrl);
+        } else {
+          // If no headers and data is null, do not rewrite the line
+          rewrittenLines.push(line);
+        }
+      } else if (line.startsWith('#EXTVLCOPT:http-')) {
+        // Handling VLC playlist headers
+        const headerSeparatorIndex = line.indexOf(':');
+        if (headerSeparatorIndex !== -1) {
+          const header = line.substring(headerSeparatorIndex + 1).trim().replace(/^['"]|['"]$/g, '');
+          vlcHeaders.push(header);
+        }
+      } else if (line.includes('inputstream.adaptive')) {
+        // Leave inputstream.adaptive tags alone
+        rewrittenLines.push(line);
+      } else if (!line.startsWith('#EXTVLCOPT') && !line.startsWith('#KODIPOP')) {
+        // Exclude EXTVLCOPT and KODIPOP lines
         rewrittenLines.push(line);
       }
     });
@@ -552,4 +815,22 @@ function rewritePlaylistUrls(content, baseUrl, data) {
     console.error('Error in rewritePlaylistUrls:', err);
     return content;
   }
+}
+
+
+// Merge multiple epg's into one.
+async function epgMerger(encodedData) {
+  const urls = Buffer.from(encodedData, 'base64').toString('utf-8').split(',');
+  let mergedEpg = '';
+
+  for (const url of urls) {
+    try {
+      const epgContent = await fetchEpgContent(url.trim());
+      mergedEpg += epgContent.replace(/<\?xml.*?\?>/, '').replace(/<\/?tv>/g, '');
+    } catch (error) {
+      console.error('Failed to fetch or parse EPG:', error);
+    }
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?><tv>${mergedEpg}</tv>`;
 }
