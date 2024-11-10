@@ -2,8 +2,16 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 const zlib = require('zlib');
+let Redis;
 
-// Create the HTTP server
+if (process.env.REDIS_URL) {
+  Redis = require("ioredis");
+}
+
+let sessionTokens = {};
+let lastCheckedTimestamps = {};
+const storage = initializeStorage();
+
 http.createServer(async (req, res) => {
   try {
     const parsedUrl = url.parse(req.url, true);
@@ -438,16 +446,36 @@ http://example.com/playlist.m3u8
 		return;
 	}
 
-    const requestUrl = query.url ? decodeURIComponent(query.url) : null;
-    const secondaryUrl = query.url2 ? decodeURIComponent(query.url2) : null;
-    const data = query.data ? Buffer.from(query.data, 'base64').toString() : null;
+    let requestUrl = query.url ? decodeURIComponent(query.url) : null;
+    let secondaryUrl = query.url2 ? decodeURIComponent(query.url2) : null;
+    let data = query.data ? Buffer.from(query.data, 'base64').toString() : null;
     const isMaster = !query.url2;
-    const finalRequestUrl = isMaster ? requestUrl : secondaryUrl;
+    let finalRequestUrl = isMaster ? requestUrl : secondaryUrl;
 
     if (finalRequestUrl) {
       if (query.key && query.key === 'true') {
         await fetchEncryptionKey(res, finalRequestUrl, data);
         return;
+      }
+	  
+	  
+	  // Handle Streamed.Su URL
+      if (finalRequestUrl.includes('vipstreams.in')) {
+        if (finalRequestUrl.includes('playlist.m3u8') && !finalRequestUrl.includes('&su=1') && !finalRequestUrl.includes('?id=')) {
+			console.log('Test Final URL:', finalRequestUrl);
+          const path = finalRequestUrl.replace('https://rr.vipstreams.in/', '');
+          const token = await StreamedSUgetSessionId(path);
+          finalRequestUrl = finalRequestUrl.replace('playlist.m3u8', `playlist.m3u8?id=${token}`);
+          requestUrl = encodeURIComponent(finalRequestUrl);
+          const proxyUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
+          const fullUrl = `${proxyUrl}?url=${requestUrl}&data=${encodeURIComponent(Buffer.from(data).toString('base64'))}&su=1&suToken=${token}&type=/index.m3u8`;
+          res.writeHead(302, { Location: fullUrl });
+          res.end();
+          return;
+        } else if (query.su === '1' && query.suToken) {
+          // Check and keep the Streamed.Su token alive
+          StreamedSUtokenCheck(query.suToken).catch(err => console.error('Error in StreamedSUtokenCheck:', err));
+        }
       }
 
       const dataType = isMaster ? 'text' : 'binary';
@@ -629,7 +657,6 @@ async function handlePlaylistRequest(req, res, playlistUrl, data, epgMergingEnab
     return res.end('Error processing playlist');
   }
 }
-
 
 // Fetch encryption key
 async function fetchEncryptionKey(res, url, data) {
@@ -817,7 +844,6 @@ function rewritePlaylistUrls(content, baseUrl, data) {
   }
 }
 
-
 // Merge multiple epg's into one.
 async function epgMerger(encodedData) {
   const urls = Buffer.from(encodedData, 'base64').toString('utf-8').split(',');
@@ -834,3 +860,168 @@ async function epgMerger(encodedData) {
 
   return `<?xml version="1.0" encoding="UTF-8"?><tv>${mergedEpg}</tv>`;
 }
+
+// ----- Streamed.Su Functions ----- //
+
+async function StreamedSUgetSessionId(path) {
+  const sessionKey = getSessionKey(path);
+  const currentTime = Date.now();
+  const sessionData = await getSessionToken(sessionKey);
+
+  if (sessionData) {
+    const lastChecked = await getLastCheckedTimestamp(sessionData.token);
+
+    if (currentTime - sessionData.timestamp < 2 * 60 * 60 * 1000 && lastChecked && currentTime - lastChecked < 30000) {
+      console.log('Using cached Streamed Su Token:', sessionData.token);
+      return sessionData.token;
+    } else {
+      console.log('Token expired or not checked recently enough. Creating new token...');
+    }
+  }
+
+  const targetUrl = "https://secure.bigcoolersonline.top/init-session";
+  const sendPath = '/' + path;
+  console.log('Fetching new Streamed Su Token for path:', sendPath);
+
+  try {
+    const postData = JSON.stringify({ path: sendPath });
+
+    const options = {
+      hostname: "secure.bigcoolersonline.top",
+      path: "/init-session",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+        "Referer": "https://embedme.top/",
+      },
+    };
+
+    const token = await new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let data = "";
+
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
+
+        res.on("end", () => {
+          if (res.statusCode === 200) {
+            const responseData = JSON.parse(data);
+            console.log('Fetched new Streamed Su Token:', responseData.id);
+            resolve(responseData.id);
+          } else {
+            reject(new Error(`Failed to fetch session data: ${res.statusCode}`));
+          }
+        });
+      });
+
+      req.on("error", (error) => reject(error));
+      req.write(postData);
+      req.end();
+    });
+
+    await setSessionToken(sessionKey, token, currentTime);
+    return token;
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+}
+
+async function StreamedSUtokenCheck(token) {
+  const currentTime = Date.now();
+  const lastChecked = await getLastCheckedTimestamp(token);
+  if (lastChecked && currentTime - lastChecked < 15000) {
+    console.log(`Skipping StreamedSUtokenCheck for ${token} due to timestamp.`);
+    return null;
+  }
+
+  const url = `https://secure.bigcoolersonline.top/check/${token}`;
+  console.log('Checking Streamed Su Token: ', token);
+
+  const options = {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+      "Referer": "https://embedme.top/",
+    },
+    timeout: 7000,
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, options, (res) => {
+      let data = "";
+
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      res.on("end", async () => {
+        if (res.statusCode === 200) {
+          await setLastCheckedTimestamp(token, currentTime);
+          resolve(data);
+        } else if (res.statusCode === 429) {
+          console.error("Rate limit exceeded: 429 error.");
+          resolve(null);
+		} else if (res.statusCode === 400) {
+		  console.error("Bad token! Attempting to force a new token.");
+		  await setLastCheckedTimestamp(token, currentTime - 30000);
+          resolve(null);
+        } else {
+          reject(new Error(`Failed to check token: ${res.statusCode}`));
+        }
+      });
+    });
+
+    req.on("error", (error) => reject(error));
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error("Request timed out"));
+    });
+
+    req.end();
+  });
+}
+
+function initializeStorage() {
+  if (process.env.VERCEL) return require('@vercel/kv');
+  if (process.env.REDIS_URL) return new Redis(process.env.REDIS_URL);
+  return null;
+}
+
+function getSessionKey(path) {
+  const parts = path.split('/');
+  return parts.slice(0, 5).join('/');
+}
+
+async function getSessionToken(path) {
+  const key = `sessionToken:${path}`;
+  if (storage && storage.get) {
+    const tokenData = await storage.get(key);
+    return tokenData ? JSON.parse(tokenData) : null;
+  }
+  return sessionTokens[key];
+}
+
+async function setSessionToken(path, token, timestamp) {
+  const key = `sessionToken:${path}`;
+  const tokenData = JSON.stringify({ token, timestamp });
+  if (storage && storage.set) {
+    await storage.set(key, tokenData);
+  } else {
+    sessionTokens[key] = { token, timestamp };
+  }
+}
+
+async function getLastCheckedTimestamp(token) {
+  if (storage && storage.get) return await storage.get(`lastCheckedTimestamp:${token}`);
+  return lastCheckedTimestamps[token];
+}
+
+async function setLastCheckedTimestamp(token, timestamp) {
+  if (storage && storage.set) await storage.set(`lastCheckedTimestamp:${token}`, timestamp);
+  else lastCheckedTimestamps[token] = timestamp;
+}
+
