@@ -2,11 +2,18 @@
   "name": "m3u-playlist-proxy",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": {
+    "m3u-playlist-proxy": "./index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "ioredis": "^5.4.1",
+    "@vercel/kv": "^3.0.0"
+  }
 }
