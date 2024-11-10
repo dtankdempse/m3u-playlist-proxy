@@ -1,34 +1,64 @@
-# Streamed su Sports Playlists
+# What is the M3U Playlist Proxy
 
-Streamed su is a platform that offers live sports streaming on their website. Users can stream and watch sports directly through their browser without the need for an account or subscription.
+The M3U Playlist Proxy is a lightweight and effective tool designed to forward essential headers to proxy M3U playlist streams. Acting as a bridge between your client and the server, it ensures that important headers (such as User-Agent, Referer, etc.) are accurately passed along. This setup allows IPTV applications to reliably access streams that need specific headers in place.
 
-For added flexibility, this repository provides an M3U playlist featuring Streamed su's channels. With this, you can load the streams into any IPTV application that supports M3U-formatted playlists.
+**Note:** Ensure that you use only the standard M3U8 playlist (playlist.m3u8) when setting up the M3U Playlist Proxy. Other formats, such as TiviMate, Kodi, and VLC, are not compatible and will not work with this setup.
 
-You can view the latest events added to the playlist [here](https://github.com/dtankdempse/streamed-su-sports/blob/main/events.txt).
+## Recommended Setup for Windows Users
 
-## M3U-Playlist-Proxy (MPP) Required!
+For Windows users, this is the recommended method to use the M3U Playlist Proxy.
 
-Following recent updates by Streamed Su Sports, using MPP is now necessary to stream this playlist. You can watch a video guide on setting up and downloading the M3U-Playlist-Proxy [here](https://github.com/dtankdempse/m3u-playlist-proxy).
+https://github.com/user-attachments/assets/5888656b-1dee-4dd2-8494-541c2934657d
 
-- **Playlist.m3u8**  
-  This is a standard M3U playlist. To use it, load the Playlist URL into MPP and ensure both the `Referer` and `User-Agent` headers are correctly configured. Set the `Referer` to `https://embedme.top/` and use a compatible `User-Agent` string to enable stream access. Without these headers, streaming attempts will result in a 403 error.
+Simply download and extract the ZIP file, then run the setup_service.bat. This will install the m3u-playlist-proxy as a Windows service, allowing it to run seamlessly in the background. If you're not using a Windows machine or prefer a different setup, feel free to use one of the other options below.
 
+[![Download ZIP](https://img.shields.io/badge/Download-ZIP-brightgreen)](https://github.com/dtankdempse/m3u-playlist-proxy/raw/refs/heads/main/win/m3u-playlist-proxy.zip)
 
-  - **Playlist URL:** [https://bit.ly/su-m3u1](https://bit.ly/su-m3u1)
-  - **EPG URL:** [https://bit.ly/su-epg](https://bit.ly/su-epg)
-  - **Required Referer:** `https://embedme.top/`
-  - **User-Agent:** `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0`  
-    (Alternatively, you may use your own User-Agent string.)
+## Deploy to Vercel
 
-## Playlist and EPG Syncing:
+Vercel’s free tier includes 100 GB of bandwidth and 1,000 build minutes per month, making it an excellent option for deploying the m3u-playlist-proxy. This allocation is more than enough to manage personal stream proxying and development needs efficiently.
 
-The playlist and EPG data are updated every 4 hours. Since streaming data can change frequently, it’s recommended to sync the refresh of both your playlist and guide information simultaneously in your IPTV application. If you notice 'No information' being displayed in the guide, try manually refreshing the EPG within your application to ensure the most up-to-date data is loaded.
+https://github.com/user-attachments/assets/4fd3c242-b1d0-4f2b-bccb-d0b98b8ba94e
 
-## Sports:
+Click the button below to deploy this project to Vercel.
 
-Basketball, Football, American Football, Hockey, Baseball, Motor Sports, Fight (UFC, Boxing), Tennis, Rugby, Golf, Billiards, AFL, Darts, Cricket, Other
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/dtankdempse/m3u-playlist-proxy)
 
-## Disclaimer:
+### Steps to Deploy:
 
-This repository has no control over the streams, links, or the legality of the content provided by Streamed.su. It is the end user's responsibility to ensure the legal use of these streams, and we strongly recommend verifying that the content complies with the laws and regulations of your country before use.
+1. **Click the Deploy Button**:
+- When you click the **Deploy with Vercel** button, you'll be redirected to Vercel's platform. It will automatically import the project template from this GitHub repository.
 
+2. **Log in Using GitHub**:
+- It is recommended to log in to Vercel using a GitHub account. This makes the integration smoother and allows Vercel to access the repository directly. If you don’t have a Vercel account, you can sign up for free.
+
+3. **Configure Project Settings**:
+- After logging in, Vercel will guide you through the project setup. You can review the project name and select the team or personal account under which you want to deploy the project.
+
+4. **Deploy the Project**:
+- After confirming the settings, click **Deploy**. Vercel will automatically build and deploy the project based on the configuration defined in the repository.
+
+5. **View the Live Project**:
+- Once the deployment is complete, you will see a link to access your newly deployed project.
+
+   **IMPORTANT**
+
+   If you click the link directly and receive a 400 Bad Request error, this may be due to a `?vercelToolbarCode=xxxxxx` parameter being added to the URL. Simply remove this parameter from the address bar and reload the page.
+
+## Setup with Docker
+
+The M3U Playlist Proxy is also available as a Docker image, allowing you to easily deploy it in a containerized environment. By using Docker, you can quickly start the proxy without needing to install dependencies or manually configure the environment.
+
+### Pulling the Docker Image
+
+To get started, pull the latest version of the M3U Playlist Proxy Docker image with the following command:
+
+`docker pull dtankdemp/m3u-playlist-proxy:latest`
+
+### Running the M3U Playlist Proxy Container
+
+Once you’ve pulled the image, you can start the container using:
+
+`docker run -d -p <port>:4123 dtankdemp/m3u-playlist-proxy:latest`
+
+This command runs the proxy on port 4123, allowing your IPTV application to connect to it locally or remotely (depending on your setup) to access M3U playlist streams with the necessary headers correctly forwarded. Adjust the port if needed, based on your environment.
