@@ -20,7 +20,7 @@ http.createServer(async (req, res) => {
 	
 	console.log(`Incoming request: ${req.url}`);
 	console.log('Query parameters:', query);
-
+	
     if (pathname === '/' && !parsedUrl.search) {
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -74,14 +74,22 @@ http.createServer(async (req, res) => {
         align-content: center;
     }
 
-    button#add-more {
+    button#add-more,fetchPlaylistGroups {
+        background-color: #007bff;
+        color: white;
+    }
+	
+	button#fetchPlaylistGroups {
         background-color: #007bff;
         color: white;
     }
 
     button[type="submit"] {
-        background-color: #28a745;
-        color: white;
+		background-color: #28a745;
+		color: white;
+		width: 94%;
+		font-size: 18px;
+		margin-top: 20px;
     }
 
     button:hover {
@@ -91,23 +99,23 @@ http.createServer(async (req, res) => {
     button:focus {
         outline: none;
     }
-	
-	select {		
-	  width: 100%;
-	  font-size: 16px;
-	  padding: 10px;
-	  font-size: 16px;
-	  border: 1px solid #ccc;
-	  border-radius: 4px;
-	  margin-bottom: 20px;
-	  background-color: #fff;
-	  color: #626262;			
-	}
+    
+    select {        
+      width: 100%;
+      font-size: 16px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      background-color: #fff;
+      color: #626262;            
+    }
 
     /* Styling for Text Area */
     textarea {
         width: 50%;
-		max-width: 600px;
+        max-width: 600px;
         margin: 0 auto;
         display: block;
         padding: 10px;
@@ -132,20 +140,19 @@ http.createServer(async (req, res) => {
         margin-bottom: 20px;
         color: #626262;
     }
-	
-	
+    
+    
     .container {
         max-width: 600px;
         margin: 0 auto;
     }
-	
-		
-	.epg_container {
-		float: right;
-		margin-right: 10px;
-		position: relative;
-		top: -10px;		
-	}
+        
+    .epg_container {
+        float: right;
+        margin-right: 10px;
+        position: relative;
+        top: -10px;        
+    }
 
     .footer {
         max-width: 600px;
@@ -155,6 +162,22 @@ http.createServer(async (req, res) => {
         text-align: center;
     }
 
+    /* Group Checkbox Styling */
+    .group-checkbox-container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        height: 200px;
+        overflow-y: auto;
+        background-color: #f7f7f7;
+    }
+
+    .group-checkbox-container label {
+        display: block;
+        margin-bottom: 5px;
+    }
 
     /* Basic Responsive Design */
     @media (max-width: 600px) {
@@ -167,13 +190,13 @@ http.createServer(async (req, res) => {
             flex-direction: column;
         }
     }
-	
-	pre {
-	  background-color: #eaeaea;
-	  color: #000;
-	  padding-top: 15px;
-	  padding-left: 15px;
-	}
+    
+    pre {
+      background-color: #eaeaea;
+      color: #000;
+      padding-top: 15px;
+      padding-left: 15px;
+    }
 
     /* Styling for Help Overlay */
     #help-overlay {
@@ -197,22 +220,22 @@ http.createServer(async (req, res) => {
         padding: 20px;
         border-radius: 8px;
         max-width: 80%;
-		width: 60%;
-		max-height: 70%;
-		overflow: scroll;
+        width: 60%;
+        max-height: 70%;
+        overflow: scroll;
     }
 
-	#close-help {
-	  position: absolute;
-	  top: 5px;
-	  right: 20px;
-	  background: none;
-	  border: none;
-	  font-size: 34px;
-	  font-weight: bold;
-	  color: #ff4e4e;
-	  cursor: pointer;
-	}
+    #close-help {
+      position: absolute;
+      top: 5px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 34px;
+      font-weight: bold;
+      color: #ff4e4e;
+      cursor: pointer;
+    }
 
     #close-help:hover {
         opacity: 0.7;
@@ -226,17 +249,31 @@ http.createServer(async (req, res) => {
     </div>
 
     <form id="headerForm">
-        <div>
-            <label for="playlistUrl">Playlist URL (use comma for multiple URLs):</label><div class="epg_container"><input type="checkbox" id="epgMerging" checked><label style="font-size:13px;margin-left:2px;">Merge epg's</label></div>
-            <input type="text" id="playlistUrl" name="playlistUrl" placeholder="Enter playlist URL" style="width: 96%; margin-bottom: 20px;">
+    <div>
+        <label for="playlistUrl">Playlist URL (use comma for multiple URLs):</label>
+        <div class="epg_container">
+            <input type="checkbox" id="epgMerging" checked><label style="font-size:13px;margin-left:2px;">Merge epg's</label>
         </div>
-        
-        <div class="header-pair">
-            <input type="text" name="headerName" placeholder="Header Name">
-            <input type="text" name="headerValue" placeholder="Header Value">
-        </div>
-        <button type="button" id="add-more">Add More Headers</button>
-        <button type="submit">Generate Playlist URL</button>
+        <input type="text" id="playlistUrl" name="playlistUrl" placeholder="Enter playlist URL" style="width: 96%; margin-bottom: 20px;">
+    </div>
+    
+   
+	 <label id="label-checkbox-container" style="display:none;margin-bottom:-15px;">Select Groups:</label>
+    
+    <div class="group-checkbox-container" id="groupCheckboxContainer" style="display:none;">       
+        <label><input type="checkbox" id="checkUncheckAll" value="all"> Check/Uncheck All</label>
+        <!-- Group checkboxes will be dynamically added here -->
+    </div>
+    
+    <div class="header-pair">
+        <input type="text" name="headerName" placeholder="Header Name">
+        <input type="text" name="headerValue" placeholder="Header Value">
+    </div>    
+    
+     
+    <button type="button" id="add-more">Add More Headers</button>
+	<button type="button" id="fetchPlaylistGroups">Choose Groups</button>
+    <button type="submit">Generate Playlist URL</button>
     </form>
 
     <center><h4>Generated Playlist URL:</h4></center>
@@ -252,26 +289,28 @@ http.createServer(async (req, res) => {
     <div id="help-overlay">
         <div id="help-content">
             <span id="close-help">&times;</span>
-			
-	<h4>Adding Playlist URL(s)</h4>
+            
+    <h4>Adding Playlist URL(s)</h4>
 
-	<p>When adding multiple playlist URLs, separate them with a comma. This will merge all playlists into a single combined list. If multiple EPGs are defined in the playlists using the <code>url-tvg</code> tag, they will also be merged into a single EPG file.</p>
+    <p>When adding multiple playlist URLs, separate them with a comma. This will merge all playlists into a single combined list. If multiple EPGs are defined in the playlists using the <code>url-tvg</code> tag, they will also be merged into a single EPG file.</p>
 
-	<strong>Example:</strong>
-	<pre>
+    <strong>Example:</strong>
+    <pre>
 http://example.com/playlist1.m3u8,http://example.com/playlist2.m3u8,http://example.com/playlist3.m3u8
-	</pre>
+    </pre>
 
-	<p>The example above will merge three playlists into a single playlist.</p>
+    <p>The example above will merge three playlists into a single playlist.</p>
 
-	<h4>Merge EPGs</h4> 
+    <h4>Merge EPGs</h4> 
 
-	<p>When checked, this option combines EPG sources (specified by <code>tvg-url</code>) into a single EPG file if more than one playlist is used. If only one playlist is used, the <code>tvg-url</code> will remain untouched. This provides a consolidated channel guide across merged playlists. Leaving this unchecked removes all <code>tvg-url</code> tags when multiple sources are detected, helping to reduce bandwidth usage. This is especially useful on free-tier services like Vercel.</p>
+    <p>When checked, this option combines EPG sources (specified by <code>tvg-url</code>) into a single EPG file if more than one playlist is used. If only one playlist is used, the <code>tvg-url</code> will remain untouched. This provides a consolidated channel guide across merged playlists. Leaving this unchecked removes all <code>tvg-url</code> tags when multiple sources are detected, helping to reduce bandwidth usage. This is especially useful on free-tier services like Vercel.</p>
+	
+	<h4>Select Groups</h4> 
 
+    <p>The Select Groups can be used to filter out channels from the playlist based on the group titles. First click on the Choose Groups button to fetch the playlist, the grpups will then be listed. Check the box next to each group you want to include in the playlist; any unchecked boxes will be excluded from the playlist.</p>
 
     <h4>Headers in the Playlist</h4>
     <p>If specific headers for applications like VLC, TiviMate, or Kodi are included within the playlist, MPP will use those headers to proxy the individual streams. This means the headers embedded in the playlist itself will be utilized directly when accessing a particular stream.</p>
-
 
     <h4>Headers in the Header Fields</h4>
     <p>If no headers are present within the playlist for a given stream, MPP will fall back to using the headers specified in the "Header Name / Value" fields of the form. This allows for a default set of headers to be used when the playlist lacks specific instructions.</p>
@@ -285,8 +324,8 @@ http://example.com/playlist1.m3u8,http://example.com/playlist2.m3u8,http://examp
         <li>Headers embedded in the playlist.</li>
         <li>Headers provided via form input.</li>
         <li>No headers at all.</li>
-	</ol>
-	
+    </ol>
+    
     <h4>Supported Formats</h4>
     <p>The following are supported formats for specifying headers within a playlist:</p>
 
@@ -328,46 +367,117 @@ http://example.com/playlist.m3u8
             document.getElementById('headerForm').insertBefore(headerPair, document.getElementById('add-more'));
         });
 
-		document.getElementById('headerForm').addEventListener('submit', function (event) {
-			event.preventDefault();
+        document.getElementById('checkUncheckAll').addEventListener('change', function () {
+            const isChecked = this.checked;
+            document.querySelectorAll('.group-checkbox').forEach(checkbox => checkbox.checked = isChecked);
+        });
 
-			const playlistUrl = document.getElementById('playlistUrl').value.trim();
-			if (!playlistUrl) {
-				alert('Please enter a Playlist URL.');
-				return;
-			}
+        document.getElementById('fetchPlaylistGroups').addEventListener('click', function (event) {
+            document.getElementById('label-checkbox-container').style.display = 'block';
+            event.preventDefault(); // Prevent any form submission triggered by button click
 
-			// Collect headers
-			let headers = [];
-			const headerPairs = document.querySelectorAll('.header-pair');
+            const playlistUrl = document.getElementById('playlistUrl').value.trim();
+            if (!playlistUrl) {
+                alert('Please enter a Playlist URL to fetch groups.');
+                return;
+            }
 
-			headerPairs.forEach(pair => {
-				const headerName = pair.querySelector('input[name="headerName"]').value;
-				const headerValue = pair.querySelector('input[name="headerValue"]').value;
-				if (headerName && headerValue) {
-					headers.push(headerName + "=" + headerValue);
-				}
-			});
+            const urls = playlistUrl.split(',').map(url => url.trim());
+            const groupTitles = new Set();
 
-			const baseUrl = window.location.origin;
-			let fullUrl = baseUrl + "/playlist?url=" + encodeURIComponent(playlistUrl);
+            function fetchPlaylist(url) {
+                return fetch('/fetch?url=' + encodeURIComponent(url), {
+                    method: 'GET'
+                })
+                .then(response => response.text())
+                .then(data => {
+                    if (data.includes('<a href="')) {
+                        const redirectUrlMatch = data.match(/<a href="(.*?)"/);
+                        if (redirectUrlMatch) {
+                            return fetchPlaylist(redirectUrlMatch[1]);
+                        }
+                    } 
+                    const regex = /group-title="(.*?)"/gi;
+                    let match;
+                    while ((match = regex.exec(data)) !== null) {
+                        groupTitles.add(match[1]);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching the playlist:', error);
+                    alert('Failed to fetch the playlist. Please check the URL and try again.');
+                });
+            }
 
-			// Encode headers if present
-			if (headers.length > 0) {
-				const headerString = headers.join('|');
-				const base64Encoded = btoa(headerString);
-				const urlEncodedData = encodeURIComponent(base64Encoded);
-				fullUrl += "&data=" + urlEncodedData;
-			}
+            Promise.all(urls.map(url => fetchPlaylist(url))).then(() => {
+                const groupContainer = document.getElementById('groupCheckboxContainer');
+                groupContainer.style.display = 'block';
+                groupContainer.innerHTML = '<label><input type="checkbox" id="checkUncheckAll" value="all"> Check/Uncheck All</label>';
+                Array.from(groupTitles).sort().forEach(group => {
+                    const label = document.createElement('label');
+                    label.innerHTML = '<input type="checkbox" class="group-checkbox" value="' + group + '" checked> ' + group;
+                    groupContainer.appendChild(label);
+                });
 
-			// Check if epgMerging is checked, and add it to the URL
-			const epgMergingChecked = document.getElementById('epgMerging').checked;
-			if (epgMergingChecked) {
-				fullUrl += "&epgMerging=true";
-			}
+                document.getElementById('checkUncheckAll').addEventListener('change', function () {
+                    const isChecked = this.checked;
+                    document.querySelectorAll('.group-checkbox').forEach(checkbox => checkbox.checked = isChecked);
+                });
+            });
+        });
 
-			document.getElementById('result').value = fullUrl;
-		});
+        document.getElementById('headerForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const playlistUrl = document.getElementById('playlistUrl').value.trim();
+            if (!playlistUrl) {
+                alert('Please enter a Playlist URL.');
+                return;
+            }
+
+            // Collect headers
+            let headers = [];
+            const headerPairs = document.querySelectorAll('.header-pair');
+
+            headerPairs.forEach(pair => {
+                const headerName = pair.querySelector('input[name="headerName"]').value;
+                const headerValue = pair.querySelector('input[name="headerValue"]').value;
+                if (headerName && headerValue) {
+                    headers.push(headerName + "=" + headerValue);
+                }
+            });
+
+            const baseUrl = window.location.origin;
+            let fullUrl = baseUrl + "/playlist?url=" + encodeURIComponent(playlistUrl);
+
+            // Encode headers if present
+            if (headers.length > 0) {
+                const headerString = headers.join('|');
+                const base64Encoded = btoa(headerString);
+                const urlEncodedData = encodeURIComponent(base64Encoded);
+                fullUrl += "&data=" + urlEncodedData;
+            }
+
+            // Check if epgMerging is checked, and add it to the URL
+            const epgMergingChecked = document.getElementById('epgMerging').checked;
+            if (epgMergingChecked) {
+                fullUrl += "&epgMerging=true";
+            }
+
+            // Collect unchecked group titles for exclusion
+            let excludedGroups = [];
+            document.querySelectorAll('.group-checkbox').forEach(checkbox => {
+                if (!checkbox.checked) {
+                    excludedGroups.push(checkbox.value);
+                }
+            });
+
+            if (excludedGroups.length > 0) {
+                fullUrl += "&exclude=" + encodeURIComponent(excludedGroups.join(','));
+            }
+
+            document.getElementById('result').value = fullUrl;
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             const host = window.location.hostname;
@@ -406,11 +516,55 @@ http://example.com/playlist.m3u8
         });
     </script>
 </body>
-</html>`;
+</html>
+`;
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(html);
       return;
     }
+
+	if (parsedUrl.pathname === '/fetch') {
+		const targetUrl = parsedUrl.query.url;
+
+		if (!targetUrl) {
+			res.writeHead(400, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify({ error: 'Missing URL parameter' }));
+			return;
+		}
+
+		try {
+			const protocol = targetUrl.startsWith('https') ? https : http;
+
+			protocol.get(targetUrl, (response) => {
+				let data = '';
+
+				response.on('data', chunk => {
+					data += chunk;
+				});
+
+				response.on('end', () => {
+					if (!res.headersSent) {
+						res.writeHead(200, { 'Content-Type': 'text/plain' });
+						res.end(data);
+					}
+				});
+			}).on('error', (e) => {
+				if (!res.headersSent) {
+					res.writeHead(500, { 'Content-Type': 'application/json' });
+					res.end(JSON.stringify({ error: e.message }));
+				}
+			});
+
+		} catch (error) {
+			if (!res.headersSent) {
+				res.writeHead(500, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify({ error: error.message }));
+			}
+		}
+
+		return; 
+	}
+
 
 	if (pathname === '/playlist') {
 	  const urlParam = query.url;
@@ -613,6 +767,10 @@ async function handlePlaylistRequest(req, res, playlistUrl, data, epgMergingEnab
 
     const baseUrl = new URL(req.url, `http://${req.headers.host}`).origin;
 
+    // Extract exclude parameter if provided
+    const excludeParam = new URL(req.url, `http://${req.headers.host}`).searchParams.get('exclude');
+    const excludeGroups = excludeParam ? excludeParam.split(',').map(decodeURIComponent) : [];
+
     for (const url of urls) {
       console.log("Fetching playlist URL: " + url.trim());
       const result = await fetchContent(url.trim(), null, 'text');
@@ -628,6 +786,32 @@ async function handlePlaylistRequest(req, res, playlistUrl, data, epgMergingEnab
         playlistContent = playlistContent.replace(/^#EXTM3U\s*\n?/, '');
       }
 
+      // Remove channels based on exclude parameter
+      if (excludeGroups.length > 0) {
+        const lines = playlistContent.split('\n');
+        let filteredContent = '';
+        let skip = false;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          if (line.startsWith('#EXTINF')) {
+            const groupTitleMatch = line.match(/group-title="(.*?)"/);
+            if (groupTitleMatch && excludeGroups.includes(groupTitleMatch[1])) {
+              skip = true;
+            } else {
+              skip = false;
+            }
+          }
+
+          if (!skip) {
+            filteredContent += line + '\n';
+          }
+        }
+
+        playlistContent = filteredContent.trim();
+      }
+
       playlistContent = rewritePlaylistUrls(playlistContent, baseUrl, data);
       combinedContent += playlistContent + '\n';
     }
@@ -637,16 +821,20 @@ async function handlePlaylistRequest(req, res, playlistUrl, data, epgMergingEnab
       const epgString = Array.from(epgUrls).join(',');
       const encodedEpg = Buffer.from(epgString).toString('base64');
       const rewrittenEpgUrl = `${baseUrl}/Epg?data=${encodedEpg}`;
-      combinedContent = `#EXTM3U url-tvg="${rewrittenEpgUrl}"\n${combinedContent.trim()}`;
+      combinedContent = `#EXTM3U url-tvg="${rewrittenEpgUrl}"
+${combinedContent.trim()}`;
     } else if (epgUrls.size === 1) {
       // Use a single EPG URL if only one exists
       const singleEpgUrl = Array.from(epgUrls)[0];
-      combinedContent = `#EXTM3U url-tvg="${singleEpgUrl}"\n${combinedContent.trim()}`;
+      combinedContent = `#EXTM3U url-tvg="${singleEpgUrl}"
+${combinedContent.trim()}`;
     } else if (epgUrls.size > 1 && !epgMergingEnabled) {
       // Strip EPG URLs if multiple are present and merging is disabled
-      combinedContent = `#EXTM3U\n${combinedContent.trim()}`;
+      combinedContent = `#EXTM3U
+${combinedContent.trim()}`;
     } else {
-      combinedContent = `#EXTM3U\n${combinedContent.trim()}`;
+      combinedContent = `#EXTM3U
+${combinedContent.trim()}`;
     }
 
     res.writeHead(200, { 'Content-Type': 'text/plain' });
