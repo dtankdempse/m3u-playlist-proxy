@@ -616,7 +616,7 @@ http://example.com/playlist.m3u8
 	  // Handle Streamed.Su URL
       if (finalRequestUrl.includes('vipstreams.in')) {
         if (finalRequestUrl.includes('playlist.m3u8') && !finalRequestUrl.includes('&su=1') && !finalRequestUrl.includes('?id=')) {
-			console.log('Test Final URL:', finalRequestUrl);
+			//console.log('Test Final URL:', finalRequestUrl);
           const path = finalRequestUrl.replace('https://rr.vipstreams.in/', '');
           const token = await StreamedSUgetSessionId(path);
           finalRequestUrl = finalRequestUrl.replace('playlist.m3u8', `playlist.m3u8?id=${token}`);
@@ -649,7 +649,7 @@ http://example.com/playlist.m3u8
       if (isMaster) {
         const baseUrl = new URL(result.finalUrl).origin;
         const proxyUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
-        content = rewriteUrls(content, baseUrl, proxyUrl, query.data);
+        content = rewriteUrls(content, finalRequestUrl, proxyUrl, query.data);
         //console.log("Processed content:", content);
       }
       
@@ -866,43 +866,68 @@ async function fetchEncryptionKey(res, url, data) {
 }
 
 // Rewrite URLs in the M3U8 playlist
-function rewriteUrls(content, baseUrl, proxyUrl, data) {
+function rewriteUrls(content, requestUrl, proxyUrl, data) {
   try {
+    console.log(`Request URL: ${requestUrl}`);
+
+    // Determine the base path (directory of the request URL)
+    const urlObj = new URL(requestUrl);
+    const baseUrl = `${urlObj.origin}${urlObj.pathname.replace(/\/[^/]*$/, '/')}`;
+    //console.log(`Determined baseUrl: ${baseUrl}`);
+
     const lines = content.split('\n');
     const rewrittenLines = [];
-    let isNextLineUri = false;
+    let isNextLineMasterPlaylist = false;
 
-    lines.forEach(line => {
+    lines.forEach((line, index) => {
+      line = line.trim();
+      //console.log(`Processing line: ${line}`);
+
       if (line.startsWith('#')) {
+        // Handle URI attributes in EXT-X-KEY
         if (line.includes('URI="')) {
           const uriMatch = line.match(/URI="([^"]+)"/i);
-          let uri = uriMatch[1];
+          if (uriMatch && uriMatch[1]) {
+            let uri = uriMatch[1];
 
-          if (!uri.startsWith('http')) {
-            uri = new URL(uri, baseUrl).href;
+            if (!uri.startsWith('http')) {
+              uri = new URL(uri, baseUrl).href;
+              //console.log(`Resolved relative URI to: ${uri}`);
+            }
+
+            const rewrittenUri = `${proxyUrl}?url=${encodeURIComponent(uri)}&data=${encodeURIComponent(data)}${line.includes('#EXT-X-KEY') ? '&key=true' : ''}`;
+            line = line.replace(uriMatch[1], rewrittenUri);
+            //console.log(`Rewritten URI: ${rewrittenUri}`);
           }
-
-          const rewrittenUri = `${proxyUrl}?url=${encodeURIComponent(uri)}&data=${encodeURIComponent(data)}${line.includes('#EXT-X-KEY') ? '&key=true' : ''}`;
-          line = line.replace(uriMatch[1], rewrittenUri);
         }
 
         rewrittenLines.push(line);
 
+        // Flag the next line as master playlist or segment
         if (line.includes('#EXT-X-STREAM-INF')) {
-          isNextLineUri = true;
+          isNextLineMasterPlaylist = true;
+        } else {
+          isNextLineMasterPlaylist = false;
         }
-      } else if (line.startsWith('http') || isNextLineUri) {
-        const urlParam = isNextLineUri ? 'url' : 'url2';
+      } else if (line.trim() && !line.startsWith('#')) {
+        // Determine the type of URL
+        const isMasterPlaylist = isNextLineMasterPlaylist || line.includes('.m3u8');
+        const isSegment = !isMasterPlaylist; // Default to segment if not master
+
+        const urlParam = isSegment ? 'url2' : 'url';
         let lineUrl = line;
 
         if (!lineUrl.startsWith('http')) {
+          // Resolve relative paths for URLs
           lineUrl = new URL(lineUrl, baseUrl).href;
+          //console.log(`Resolved relative line URL to: ${lineUrl}`);
         }
 
-        const fullUrl = `${proxyUrl}?${urlParam}=${encodeURIComponent(lineUrl)}&data=${encodeURIComponent(data)}${urlParam === 'url' ? '&type=/index.m3u8' : '&type=/index.ts'}`;
+        const fullUrl = `${proxyUrl}?${urlParam}=${encodeURIComponent(lineUrl)}&data=${encodeURIComponent(data)}${isSegment ? '&type=/index.ts' : '&type=/index.m3u8'}`;
         rewrittenLines.push(fullUrl);
+        //console.log(`Rewritten line URL: ${fullUrl}`);
 
-        isNextLineUri = false;
+        isNextLineMasterPlaylist = false;
       } else {
         rewrittenLines.push(line);
       }
