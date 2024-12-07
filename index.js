@@ -14,6 +14,12 @@ const storage = initializeStorage();
 
 http.createServer(async (req, res) => {
   try {
+
+    // Add CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
     const parsedUrl = url.parse(req.url, true);
     const pathname = parsedUrl.pathname;
     const query = parsedUrl.query;
@@ -621,7 +627,11 @@ http://example.com/playlist.m3u8
           const token = await StreamedSUgetSessionId(path);
           finalRequestUrl = finalRequestUrl.replace('playlist.m3u8', `playlist.m3u8?id=${token}`);
           requestUrl = encodeURIComponent(finalRequestUrl);
-          const proxyUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
+					const protocol = req.headers['x-forwarded-proto']?.split(',')[0] || (req.socket.encrypted ? 'https' : 'http');
+					const reqFullUrl = `${protocol}://${req.headers.host}${req.url}`;
+					const parsedUrl = new URL(reqFullUrl);
+					const proxyUrl = `${protocol}://${req.headers.host}`;
+
           const fullUrl = `${proxyUrl}?url=${requestUrl}&data=${encodeURIComponent(Buffer.from(data).toString('base64'))}&su=1&suToken=${token}&type=/index.m3u8`;
           res.writeHead(302, { Location: fullUrl });
           res.end();
@@ -648,7 +658,10 @@ http://example.com/playlist.m3u8
 
       if (isMaster) {
         const baseUrl = new URL(result.finalUrl).origin;
-        const proxyUrl = `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
+				const protocol = req.headers['x-forwarded-proto']?.split(',')[0] || (req.socket.encrypted ? 'https' : 'http');
+				const reqFullUrl = `${protocol}://${req.headers.host}${req.url}`;
+				const parsedUrl = new URL(reqFullUrl);
+				const proxyUrl = `${protocol}://${req.headers.host}`;
         content = rewriteUrls(content, finalRequestUrl, proxyUrl, query.data);
         //console.log("Processed content:", content);
       }
@@ -765,10 +778,15 @@ async function handlePlaylistRequest(req, res, playlistUrl, data, epgMergingEnab
     let combinedContent = '';
     const epgUrls = new Set();
 
-    const baseUrl = new URL(req.url, `http://${req.headers.host}`).origin;
+		// Get the full URL of the request
+		const reqFullUrl = `${req.protocol}://${req.headers.host}${req.url}`;
+		const parsedUrl = new URL(reqFullUrl);
+		const protocol = req.headers['x-forwarded-proto']?.split(',')[0] || (req.socket.encrypted ? 'https' : 'http');
+
+    const baseUrl = new URL(req.url, `${protocol}://${req.headers.host}`).origin;
 
     // Extract exclude parameter if provided
-    const excludeParam = new URL(req.url, `http://${req.headers.host}`).searchParams.get('exclude');
+    const excludeParam = new URL(req.url, `${protocol}://${req.headers.host}`).searchParams.get('exclude');
     const excludeGroups = excludeParam ? excludeParam.split(',').map(decodeURIComponent) : [];
 
     for (const url of urls) {
