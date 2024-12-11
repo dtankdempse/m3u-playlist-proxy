@@ -2,6 +2,7 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 const zlib = require('zlib');
+const UserAgents = require('user-agents');
 let Redis;
 
 if (process.env.REDIS_URL) {
@@ -619,28 +620,29 @@ http://example.com/playlist.m3u8
       }
 	  
 	  
-	  // Handle Streamed.Su URL
-      if (finalRequestUrl.includes('vipstreams.in')) {
-        if (finalRequestUrl.includes('playlist.m3u8') && !finalRequestUrl.includes('&su=1') && !finalRequestUrl.includes('?id=')) {
-			//console.log('Test Final URL:', finalRequestUrl);
-          const path = finalRequestUrl.replace('https://rr.vipstreams.in/', '');
-          const token = await StreamedSUgetSessionId(path);
-          finalRequestUrl = finalRequestUrl.replace('playlist.m3u8', `playlist.m3u8?id=${token}`);
-          requestUrl = encodeURIComponent(finalRequestUrl);
+			// Handle Streamed.Su URL
+			if (finalRequestUrl.includes('vipstreams.in')) {
+				if (finalRequestUrl.includes('playlist.m3u8') && !finalRequestUrl.includes('&su=1') && !finalRequestUrl.includes('?id=')) {
+					const path = finalRequestUrl.replace('https://rr.vipstreams.in/', '');
+					const ua = new UserAgents().toString();
+					const base64UA = Buffer.from(ua).toString('base64');
+					const urlEncodedUA = encodeURIComponent(base64UA);
+					const token = await StreamedSUgetSessionId(path, ua);
+					finalRequestUrl = finalRequestUrl.replace('playlist.m3u8', `playlist.m3u8?id=${token}`);
+					requestUrl = encodeURIComponent(finalRequestUrl);
 					const protocol = req.headers['x-forwarded-proto']?.split(',')[0] || (req.socket.encrypted ? 'https' : 'http');
 					const reqFullUrl = `${protocol}://${req.headers.host}${req.url}`;
 					const parsedUrl = new URL(reqFullUrl);
 					const proxyUrl = `${protocol}://${req.headers.host}`;
-
-          const fullUrl = `${proxyUrl}?url=${requestUrl}&data=${encodeURIComponent(Buffer.from(data).toString('base64'))}&su=1&suToken=${token}&type=/index.m3u8`;
-          res.writeHead(302, { Location: fullUrl });
-          res.end();
-          return;
-        } else if (query.su === '1' && query.suToken) {
-          // Check and keep the Streamed.Su token alive
-          StreamedSUtokenCheck(query.suToken).catch(err => console.error('Error in StreamedSUtokenCheck:', err));
-        }
-      }
+					const fullUrl = `${proxyUrl}?url=${requestUrl}&data=${encodeURIComponent(Buffer.from(data).toString('base64'))}&su=1&suToken=${token}&ua=${urlEncodedUA}&type=/index.m3u8`;
+					res.writeHead(302, { Location: fullUrl });
+					res.end();
+					return;
+				} else if (query.su === '1' && query.suToken && query.ua) {
+					const ua = Buffer.from(query.ua, 'base64').toString('utf-8');
+					StreamedSUtokenCheck(query.suToken, ua).catch(err => console.error('Error in StreamedSUtokenCheck:', err));
+				}
+			}
 
       const dataType = isMaster ? 'text' : 'binary';
       const result = await fetchContent(finalRequestUrl, data, dataType);
@@ -1094,7 +1096,7 @@ async function epgMerger(encodedData) {
 
 // ----- Streamed.Su Functions ----- //
 
-async function StreamedSUgetSessionId(path) {
+async function StreamedSUgetSessionId(path, ua) {
   const sessionKey = getSessionKey(path);
   const currentTime = Date.now();
   const sessionData = await getSessionToken(sessionKey);
@@ -1110,21 +1112,32 @@ async function StreamedSUgetSessionId(path) {
     }
   }
 
-  const targetUrl = "https://secure.bigcoolersonline.top/init-session";
+  const targetUrl = "https://secure.embedme.top/init-session";
   const sendPath = '/' + path;
+	console.log('User-Agent: ', ua);
   console.log('Fetching new Streamed Su Token for path:', sendPath);
 
   try {
     const postData = JSON.stringify({ path: sendPath });
 
     const options = {
-      hostname: "secure.bigcoolersonline.top",
+      hostname: "secure.embedme.top",
       path: "/init-session",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
-        "Referer": "https://embedme.top/",
+        "User-Agent": ua,
+				"Accept": "*/*",
+				"Accept-Language": "en-US,en;q=0.5",
+				"Referer": "https://embedme.top/",
+				"Origin": "https://embedme.top",
+				"Connection": "keep-alive",
+				"Sec-Fetch-Dest": "empty",
+				"Sec-Fetch-Mode": "cors",
+				"Sec-Fetch-Site": "same-site",
+				"Priority": "u=4",
+				"Pragma": "no-cache",
+				"Cache-Control": "no-cache",
       },
     };
 
@@ -1160,60 +1173,55 @@ async function StreamedSUgetSessionId(path) {
   }
 }
 
-async function StreamedSUtokenCheck(token) {
+async function StreamedSUtokenCheck(token, ua) {
   const currentTime = Date.now();
   const lastChecked = await getLastCheckedTimestamp(token);
+
   if (lastChecked && currentTime - lastChecked < 15000) {
-    console.log(`Skipping StreamedSUtokenCheck for ${token} due to timestamp.`);
+    console.log(`Skipping StreamedSUtokenCheck for ${token} due to recent check.`);
     return null;
   }
 
-  const url = `https://secure.bigcoolersonline.top/check/${token}`;
-  console.log('Checking Streamed Su Token: ', token);
+  const url = `https://secure.embedme.top/check/${token}`;
+  console.log('User-Agent:', ua);
+  console.log('Checking Streamed Su Token:', token);
 
   const options = {
     method: "GET",
     headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+      "User-Agent": ua,
+      "Accept": "*/*",
+      "Accept-Language": "en-US,en;q=0.5",
       "Referer": "https://embedme.top/",
+      "Origin": "https://embedme.top",
+      "Connection": "keep-alive",
+      "Sec-Fetch-Dest": "empty",
+      "Sec-Fetch-Mode": "cors",
+      "Sec-Fetch-Site": "same-site",
     },
-    timeout: 7000,
   };
 
-  return new Promise((resolve, reject) => {
-    const req = https.request(url, options, (res) => {
-      let data = "";
-
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-
-      res.on("end", async () => {
-        if (res.statusCode === 200) {
-          await setLastCheckedTimestamp(token, currentTime);
-          resolve(data);
-        } else if (res.statusCode === 429) {
-          console.error("Rate limit exceeded: 429 error.");
-          resolve(null);
-		} else if (res.statusCode === 400) {
-		  console.error("Bad token! Attempting to force a new token.");
-		  await setLastCheckedTimestamp(token, currentTime - 30000);
-          resolve(null);
-        } else {
-          reject(new Error(`Failed to check token: ${res.statusCode}`));
-        }
-      });
-    });
-
-    req.on("error", (error) => reject(error));
-    req.on("timeout", () => {
-      req.destroy();
-      reject(new Error("Request timed out"));
-    });
-
-    req.end();
-  });
+  try {
+    const response = await fetch(url, options);
+    const data = await response.text();
+    if (response.status === 200) {
+      await setLastCheckedTimestamp(token, currentTime);
+      return data;
+    } else if (response.status === 429) {
+      console.error("Rate limit exceeded: 429 error.");
+      await new Promise(r => setTimeout(r, 10000));
+      return null;
+    } else if (response.status === 400) {
+      console.error("Invalid token detected.");
+      await setLastCheckedTimestamp(token, currentTime - 30000);
+      return null;
+    } else {
+      throw new Error(`Unexpected response: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Error during StreamedSUtokenCheck:", error);
+    throw error;
+  }
 }
 
 function initializeStorage() {
