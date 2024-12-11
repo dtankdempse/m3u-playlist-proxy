@@ -13,7 +13,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@vercel/kv": "^3.0.0",
     "ioredis": "^5.4.1",
-    "@vercel/kv": "^3.0.0"
+    "user-agents": "^1.1.385"
   }
 }
