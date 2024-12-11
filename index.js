@@ -1176,17 +1176,14 @@ async function StreamedSUgetSessionId(path, ua) {
 async function StreamedSUtokenCheck(token, ua) {
   const currentTime = Date.now();
   const lastChecked = await getLastCheckedTimestamp(token);
-
   if (lastChecked && currentTime - lastChecked < 15000) {
     console.log(`Skipping StreamedSUtokenCheck for ${token} due to recent check.`);
     return null;
   }
 
-  const url = `https://secure.embedme.top/check/${token}`;
-  console.log('User-Agent:', ua);
-  console.log('Checking Streamed Su Token:', token);
-
   const options = {
+    hostname: "secure.embedme.top",
+    path: `/check/${token}`,
     method: "GET",
     headers: {
       "User-Agent": ua,
@@ -1198,30 +1195,48 @@ async function StreamedSUtokenCheck(token, ua) {
       "Sec-Fetch-Dest": "empty",
       "Sec-Fetch-Mode": "cors",
       "Sec-Fetch-Site": "same-site",
+      "Priority": "u=4",
+      "Pragma": "no-cache",
+      "Cache-Control": "no-cache",
     },
   };
 
-  try {
-    const response = await fetch(url, options);
-    const data = await response.text();
-    if (response.status === 200) {
-      await setLastCheckedTimestamp(token, currentTime);
-      return data;
-    } else if (response.status === 429) {
-      console.error("Rate limit exceeded: 429 error.");
-      await new Promise(r => setTimeout(r, 10000));
-      return null;
-    } else if (response.status === 400) {
-      console.error("Invalid token detected.");
-      await setLastCheckedTimestamp(token, currentTime - 30000);
-      return null;
-    } else {
-      throw new Error(`Unexpected response: ${response.status}`);
-    }
-  } catch (error) {
-    console.error("Error during StreamedSUtokenCheck:", error);
-    throw error;
-  }
+  console.log('User-Agent:', ua);
+  console.log('Checking Streamed Su Token:', token);
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, async (res) => {
+      let data = "";
+
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      res.on("end", async () => {
+        if (res.statusCode === 200) {
+          await setLastCheckedTimestamp(token, currentTime);
+          resolve(data);
+        } else if (res.statusCode === 429) {
+          console.error("Rate limit exceeded: 429 error.");
+          resolve(null);
+        } else if (res.statusCode === 400) {
+          console.error("Invalid token detected.");
+          await setLastCheckedTimestamp(token, currentTime - 30000);
+          resolve(null);
+        } else {
+          reject(new Error(`Failed to check token: ${res.statusCode}`));
+        }
+      });
+    });
+
+    req.on("error", (error) => reject(error));
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error("Request timed out"));
+    });
+
+    req.end();
+  });
 }
 
 function initializeStorage() {
