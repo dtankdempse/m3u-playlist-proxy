@@ -62,3 +62,7 @@ Once you’ve pulled the image, you can start the container using:
 `docker run -d -p <port>:4123 dtankdemp/m3u-playlist-proxy:latest`
 
 This command runs the proxy on port 4123, allowing your IPTV application to connect to it locally or remotely (depending on your setup) to access M3U playlist streams with the necessary headers correctly forwarded. Adjust the port if needed, based on your environment.
+
+### Disclaimer:
+
+This software is provided "as is," without any warranties or guarantees of any kind, either expressed or implied. Use of this software is at your own risk. The developers are not responsible for any issues, damages, or legal liabilities arising from its use. By using this software, you agree that you are solely responsible for ensuring compliance with applicable laws and regulations, including those related to copyright and intellectual property.
