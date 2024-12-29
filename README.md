@@ -1,8 +1,3 @@
-![License](https://img.shields.io/github/license/dtankdempse/m3u-playlist-proxy)
-![Stars](https://img.shields.io/github/stars/dtankdempse/m3u-playlist-proxy?style=social)
-![Forks](https://img.shields.io/github/forks/dtankdempse/m3u-playlist-proxy?style=social)
-![Issues](https://img.shields.io/github/issues/dtankdempse/m3u-playlist-proxy)
-
 # 🎬 M3U Playlist Proxy
 
 The **M3U Playlist Proxy** is a lightweight and effective tool designed to forward essential headers to proxy M3U playlist streams. Acting as a bridge between your client and the server, it ensures that important headers (such as `User-Agent`, `Referer`, etc.) are accurately passed along. This setup allows IPTV applications to reliably access streams that need specific headers in place.
