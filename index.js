@@ -622,27 +622,30 @@ http://example.com/playlist.m3u8
 	  
 			// Handle Streamed.Su URL
 			if (finalRequestUrl.includes('vipstreams.in')) {
-				if (finalRequestUrl.includes('playlist.m3u8') && !finalRequestUrl.includes('&su=1') && !finalRequestUrl.includes('?id=')) {
-					const path = finalRequestUrl.replace('https://rr.vipstreams.in/', '');
-					const ua = new UserAgents().toString();
-					const base64UA = Buffer.from(ua).toString('base64');
-					const urlEncodedUA = encodeURIComponent(base64UA);
-					const token = await StreamedSUgetSessionId(path, ua);
-					finalRequestUrl = finalRequestUrl.replace('playlist.m3u8', `playlist.m3u8?id=${token}`);
-					requestUrl = encodeURIComponent(finalRequestUrl);
-					const protocol = req.headers['x-forwarded-proto']?.split(',')[0] || (req.socket.encrypted ? 'https' : 'http');
-					const reqFullUrl = `${protocol}://${req.headers.host}${req.url}`;
-					const parsedUrl = new URL(reqFullUrl);
-					const proxyUrl = `${protocol}://${req.headers.host}`;
-					const fullUrl = `${proxyUrl}?url=${requestUrl}&data=${encodeURIComponent(Buffer.from(data).toString('base64'))}&su=1&suToken=${token}&ua=${urlEncodedUA}&type=/index.m3u8`;
-					res.writeHead(302, { Location: fullUrl });
-					res.end();
-					return;
-				} else if (query.su === '1' && query.suToken && query.ua) {
-					const ua = Buffer.from(query.ua, 'base64').toString('utf-8');
-					StreamedSUtokenCheck(query.suToken, ua).catch(err => console.error('Error in StreamedSUtokenCheck:', err));
-				}
+					const isPlaylistUrl = finalRequestUrl.includes('playlist.m3u8');
+					const isNotSuParam = !requestUrl?.includes('&su=1') && !secondaryUrl?.includes('&su=1');
+
+					if (isPlaylistUrl && isNotSuParam) {
+							try {
+									const decryptedUrl = await decryptStreamUrl(finalRequestUrl);
+									if (!decryptedUrl) throw new Error('Decrypted URL is empty or invalid');
+									finalRequestUrl = decryptedUrl;
+									const encodedUrl = encodeURIComponent(finalRequestUrl);
+									const protocol = req.headers['x-forwarded-proto']?.split(',')[0] || (req.socket.encrypted ? 'https' : 'http');
+									const proxyUrl = `${protocol}://${req.headers.host}`;
+									const fullUrl = `${proxyUrl}?url=${encodedUrl}&data=${query.data}&su=1&type=/index.m3u8`;
+
+									res.writeHead(302, { Location: fullUrl });
+									res.end();
+							} catch (error) {
+									console.error('Error in decryptStreamUrl logic:', error);
+									res.writeHead(500, { 'Content-Type': 'text/plain' });
+									res.end('Error processing request');
+							}
+							return;
+					}
 			}
+
 
       const dataType = isMaster ? 'text' : 'binary';
       const result = await fetchContent(finalRequestUrl, data, dataType);
@@ -1095,6 +1098,59 @@ async function epgMerger(encodedData) {
 }
 
 // ----- Streamed.Su Functions ----- //
+
+async function decryptStreamUrl(finalRequestUrl) {
+  return new Promise((resolve, reject) => {
+    const parts = finalRequestUrl.split("/");
+    const bodyData = { source: parts[3], id: parts[5], streamNo: parts[6] };
+    const data = JSON.stringify(bodyData);
+    const ua = new UserAgents().toString();
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": ua,
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Referer": "https://embedme.top/",
+        "Origin": "https://embedme.top",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "Priority": "u=4",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache"
+      }
+    };
+
+    const req = https.request("https://embedme.top/fetch", options, res => {
+      let chunks = [];
+      res.on("data", c => chunks.push(c));
+      res.on("end", () => {
+        const responseBody = Buffer.concat(chunks).toString().trim();
+				const base64Url = 'aHR0cHM6Ly9zdHJlYW1lZC1kZWNyeXB0ZXIudmVyY2VsLmFwcC9hcGkvZGVjcnlwdD9kYXRhPQ==';
+				const decryptUrl = `${atob(base64Url)}${encodeURIComponent(responseBody)}`;       
+        https.get(decryptUrl, decryptRes => {
+          let decryptChunks = [];
+          decryptRes.on("data", d => decryptChunks.push(d));
+          decryptRes.on("end", () => {
+            try {
+              const decryptedResponse = JSON.parse(Buffer.concat(decryptChunks).toString());
+              resolve(decryptedResponse.ok);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        }).on("error", reject);
+      });
+    });
+
+    req.on("error", reject);
+    req.write(data);
+    req.end();
+  });
+}
 
 async function StreamedSUgetSessionId(path, ua) {
   const sessionKey = getSessionKey(path);
