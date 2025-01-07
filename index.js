@@ -627,8 +627,15 @@ http://example.com/playlist.m3u8
 
 					if (isPlaylistUrl && isNotSuParam) {
 							try {
-									const decryptedUrl = await decryptStreamUrl(finalRequestUrl);
+									const decodedData = Buffer.from(query.data, 'base64').toString('utf-8');
+									const userAgentMatch = decodedData.match(/User-Agent=([^|]+)/);
+									const userAgent = userAgentMatch ? userAgentMatch[1] : null;
+
+									if (!userAgent) throw new Error('User-Agent not found in query.data');
+
+									const decryptedUrl = await decryptStreamUrl(finalRequestUrl, userAgent);
 									if (!decryptedUrl) throw new Error('Decrypted URL is empty or invalid');
+									
 									finalRequestUrl = decryptedUrl;
 									const encodedUrl = encodeURIComponent(finalRequestUrl);
 									const protocol = req.headers['x-forwarded-proto']?.split(',')[0] || (req.socket.encrypted ? 'https' : 'http');
@@ -645,7 +652,6 @@ http://example.com/playlist.m3u8
 							return;
 					}
 			}
-
 
       const dataType = isMaster ? 'text' : 'binary';
       const result = await fetchContent(finalRequestUrl, data, dataType);
@@ -1099,17 +1105,20 @@ async function epgMerger(encodedData) {
 
 // ----- Streamed.Su Functions ----- //
 
-async function decryptStreamUrl(finalRequestUrl) {
+async function decryptStreamUrl(finalRequestUrl, ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0') {
   return new Promise((resolve, reject) => {
     const parts = finalRequestUrl.split("/");
     const bodyData = { source: parts[3], id: parts[5], streamNo: parts[6] };
     const data = JSON.stringify(bodyData);
-    const ua = new UserAgents().toString();
+
+		console.log("Streamed User-Agent: " + ua);
+
     const options = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "User-Agent": ua,
+				"Accept-Encoding": "identity",
         "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.5",
         "Referer": "https://embedme.top/",
